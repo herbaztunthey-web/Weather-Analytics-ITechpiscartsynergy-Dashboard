@@ -4,7 +4,7 @@
 
 ## 🚀 Live Demo
 You can view the live, fully functional version of this dashboard here:
-**[View Live Demo](https://weather-analytics-itechipiscartsynergy-dashboard.onrender.com/)**
+**[View Live Demo](https://weather-analytics-itechpiscartsynergy-dashboard.onrender.com/)**
 
 ---
 
