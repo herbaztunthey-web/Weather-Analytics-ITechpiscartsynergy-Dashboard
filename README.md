@@ -1,12 +1,10 @@
-# 🌦️ Weather-Analytics-ITechpiscartsynergy-Dashboard
+# 🌦️ Weather Analytics ITech Dashboard
 
 ![Status](https://img.shields.io/badge/Render-Live-brightgreen)
 
 ## 🚀 Live Demo
 You can view the live, fully functional version of this dashboard here:
-**[View Live Demo](https://weather-analytics-itechpiscartsynergy-dashboard.onrender.com/)**
-
----
+**[View Live Demo](https://weather-analytics-itechpiscartsynergy.onrender.com)**
 
 ## ✨ Features
 * **Real-Time Data Retrieval:** Instant weather updates for any city worldwide using the OpenWeatherMap API.
@@ -41,9 +39,9 @@ To run this project on your own machine:
    ```bash
    git clone [https://github.com/herbaztunthey-web/Weather-Analytics-ITechpiscartsynergy-Dashboard.git](https://github.com/herbaztunthey-web/Weather-Analytics-ITechpiscartsynergy-Dashboard.git)
 
-## Install dependencies  
+## Install dependencies
    pip install -r requirements.txt
-## Configure Environment Create a .env file and add: WEATHER_API_KEY=your_key_here
-## Run the app
-   python app.py
+## Configure Environment Create a .env file and add: WEATHER_API_KEY=your_key_here  
+## Run app
+python app.py
 
