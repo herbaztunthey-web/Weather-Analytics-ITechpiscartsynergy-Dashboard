@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,6 +27,13 @@
             transition: transform 0.3s ease; border: 1px solid rgba(255,255,255,0.5);
         }
         .card:hover { transform: translateY(-5px); }
+        .continent-badge {
+            background: #1e3799; color: white; padding: 2px 10px; border-radius: 20px;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .local-time {
+            font-size: 14px; color: #2d3436; font-weight: bold; margin-top: 5px;
+        }
         input { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 350px; font-size: 16px; }
         button { padding: 12px 25px; border-radius: 8px; border: none; background: #1e3799; color: white; cursor: pointer; font-weight: bold; }
     </style>
@@ -35,13 +42,9 @@
 
     <div class="developer-header">
         <h3>BABATUNDE ABASS</h3>
-        <p>DATA AND ECONOMICS ANALYST</p>
-    </div>
-    <div class="developer-header">
-        <h3>BABATUNDE ABASS</h3>
-        <p>DATA AND ECONOMICS ANALYST</p>
+        <p style="margin-bottom: 5px;">DATA AND ECONOMICS ANALYST</p>
         {% if report_date %}
-            <p style="color: #ffffff; font-size: 14px; margin-top: 5px;">
+            <p style="color: #ffffff; font-size: 14px; margin-top: 0;">
                 Report Generated: <b>{{ report_date }}</b>
             </p>
         {% endif %}
@@ -66,10 +69,14 @@
         {% endif %}
 
         <div class="card" style="background: {{ bg_color }};">
-            <h3 style="margin: 0; color: #1e3799;">{{ w.city }}</h3>
-            <div style="background: rgba(255,255,255,0.3); border-radius: 50%; display: inline-block; margin: 10px 0;">
+            <span class="continent-badge">{{ w.continent }}</span>
+            <h3 style="margin: 10px 0 0 0; color: #1e3799;">{{ w.city }}</h3>
+            <p class="local-time">Local Time: {{ w.local_time }}</p>
+            
+            <div style="background: rgba(255,255,255,0.3); border-radius: 50%; display: inline-block; margin: 5px 0;">
                 <img src="http://openweathermap.org/img/wn/{{ w.icon }}@2x.png" alt="weather icon">
             </div>
+            
             <div style="font-size: 36px; font-weight: bold; color: #2d3436;">{{ w.temp }}°C</div>
             <p style="text-transform: capitalize; font-weight: bold; color: #444;">{{ w.desc }}</p>
             <p style="font-size: 12px; color: #555;">Humidity: {{ w.humidity }}%</p>
