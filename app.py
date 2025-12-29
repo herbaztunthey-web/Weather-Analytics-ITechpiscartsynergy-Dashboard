@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
-app.secret_key = 'babatunde_integrity_v4'
+app.secret_key = 'babatunde_reliability_v5'
 
 API_KEY = os.getenv('WEATHER_API_KEY')
 
@@ -23,11 +23,10 @@ def index():
 
     if request.method == 'POST':
         city_input = request.form.get('city', '')
-        # Splits by comma and handles any number of cities
         cities = [c.strip() for c in city_input.split(',') if c.strip()]
 
         gc = geonamescache.GeonamesCache()
-        # Full mapping for continent codes
+        # ULTIMATE CONTINENT MAPPING
         continent_map = {
             'AF': 'Africa', 'AS': 'Asia', 'EU': 'Europe', 'NA': 'North America',
             'SA': 'South America', 'OC': 'Oceania', 'AN': 'Antarctica'
@@ -38,19 +37,22 @@ def index():
             try:
                 response = requests.get(url).json()
                 if response.get('cod') == 200:
+                    # Time Logic
                     offset = response['timezone']
                     local_dt = datetime.now(
                         timezone.utc) + timedelta(seconds=offset)
 
-                    # DIRECT API MAPPING: Ensures China shows CN and Canada shows CA
-                    country_code = response['sys']['country']
-                    country_info = gc.get_countries().get(country_code)
+                    # DATA FIX: Get exact Country and Continent
+                    # e.g., 'CA' for Canada
+                    country_code_iso = response['sys']['country']
+                    country_data = gc.get_countries().get(country_code_iso)
 
-                    # Continent Fix: Pulling directly from the country's actual metadata
                     continent_name = "Global"
-                    if country_info:
+                    if country_data:
+                        # Pulls the official continent code (e.g., 'NA') and converts it
+                        continent_code = country_data.get('continentcode')
                         continent_name = continent_map.get(
-                            country_info.get('continentcode'), "Global")
+                            continent_code, "Global")
 
                     weather_data = {
                         'city': response['name'],
@@ -59,12 +61,11 @@ def index():
                         'desc': response['weather'][0]['description'],
                         'icon': response['weather'][0]['icon'],
                         'local_time': local_dt.strftime("%I:%M %p"),
-                        'continent': continent_name,
-                        'country_code': country_code.lower()
+                        'continent': continent_name,  # FIXED CONTINENT
+                        'country_code': country_code_iso.lower()  # FIXED FLAG
                     }
                     weather_list.append(weather_data)
 
-                    # Update history without restricting the current results
                     if response['name'] not in session['history']:
                         session['history'].insert(0, response['name'])
                         session['history'] = session['history'][:10]
@@ -72,7 +73,7 @@ def index():
                 else:
                     error_msg = f"City '{city}' not found."
             except Exception as e:
-                error_msg = "Connection error."
+                error_msg = "Data retrieval error."
 
         session['last_results'] = weather_list
         return render_template('index.html', weather_list=weather_list, report_date=report_date, error_msg=error_msg, history=session['history'])
@@ -85,10 +86,10 @@ def download_report():
     results = session.get('last_results', [])
     if not results:
         return "No data", 400
-    report_content = "BABATUNDE ABASS - WEATHER ANALYTICS\n" + "="*40 + "\n"
+    report_content = "BABATUNDE ABASS ANALYTICS\n" + "="*30 + "\n"
     for w in results:
-        report_content += f"{w['city']} ({w['continent']}): {w['temp']}°C | {w['desc']}\n"
-    return Response(report_content, mimetype="text/plain", headers={"Content-disposition": "attachment; filename=weather_report.txt"})
+        report_content += f"{w['city']} ({w['continent']}): {w['temp']}C\n"
+    return Response(report_content, mimetype="text/plain", headers={"Content-disposition": "attachment; filename=report.txt"})
 
 
 if __name__ == '__main__':
