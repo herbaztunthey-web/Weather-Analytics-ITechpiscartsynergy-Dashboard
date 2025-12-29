@@ -6,7 +6,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { 
-            /* REINSTATED FORMER FOREST BACKGROUND */
             background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80');
             background-size: cover; background-position: center; background-attachment: fixed;
             font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding-top: 140px;
@@ -15,19 +14,20 @@
         .search-box { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px; display: inline-block; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .results-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
         
-        /* FLAG AS CARD BACKGROUND WITH GLASS OVERLAY */
         .card { 
-            padding: 25px; border-radius: 20px; width: 280px; transition: 0.3s; 
-            border: 1px solid rgba(255,255,255,0.3); position: relative; overflow: hidden;
+            padding: 0; border-radius: 20px; width: 280px; transition: 0.3s; 
+            border: 1px solid rgba(255,255,255,0.2); position: relative; overflow: hidden;
             background-size: cover !important; background-position: center !important;
         }
         .glass-overlay {
-            background: rgba(255, 255, 255, 0.85); /* Makes text readable over the flag */
-            padding: 20px; border-radius: 15px; height: 100%;
+            /* MODERN BLUR EFFECT */
+            background: rgba(255, 255, 255, 0.35); 
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            padding: 25px; height: 100%; box-sizing: border-box;
         }
-        .card:hover { transform: translateY(-10px); box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
-        .continent-badge { background: #1e3799; color: white; padding: 2px 12px; border-radius: 20px; font-size: 11px; text-transform: uppercase; margin-bottom: 10px; display: inline-block; }
-        .history-tag { display: inline-block; background: white; padding: 5px 12px; margin: 5px; border-radius: 15px; font-size: 11px; color: #1e3799; border: 1px solid #1e3799; }
+        .card:hover { transform: scale(1.03); }
+        .continent-badge { background: #1e3799; color: white; padding: 2px 12px; border-radius: 20px; font-size: 11px; text-transform: uppercase; }
+        .btn-download { background: #27ae60; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-left: 10px; display: inline-block; }
         input { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 300px; }
         button { padding: 12px 20px; border-radius: 8px; background: #1e3799; color: white; border: none; cursor: pointer; font-weight: bold; }
     </style>
@@ -36,44 +36,38 @@
 
     <div class="developer-header">
         <h3>BABATUNDE ABASS</h3>
-        <p>DATA AND ECONOMICS ANALYST | Report Generated: {{ report_date }}</p>
+        <p>DATA AND ECONOMICS ANALYST | Generated: {{ report_date }}</p>
     </div>
 
     <div class="search-box">
         <h2>Global Analytics Dashboard</h2>
-        <form method="POST">
-            <input type="text" name="city" placeholder="Lagos, London, New York..." required>
-            <button type="submit">Analyze All</button>
+        <form method="POST" style="display: inline-block;">
+            <input type="text" name="city" placeholder="Lagos, Tokyo, London..." required>
+            <button type="submit">Analyze</button>
         </form>
-        {% if history %}
-            <div style="margin-top: 15px;">
-                {% for item in history %}<span class="history-tag">{{ item }}</span>{% endfor %}
-            </div>
+        {% if weather_list %}
+            <a href="/download" class="btn-download">Download Report (.txt)</a>
         {% endif %}
     </div>
 
-    {% if error_msg %}<div style="background:#ff7675;color:white;padding:10px;margin:10px auto;width:300px;border-radius:8px;">{{ error_msg }}</div>{% endif %}
-
     <div class="results-container">
         {% for w in weather_list %}
-        <div class="card" style="background: url('https://flagcdn.com/w640/{{ w.country_code|lower }}.png');">
+        <div class="card" style="background: url('https://flagcdn.com/w640/{{ w.country_code }}.png');">
             <div class="glass-overlay">
                 <span class="continent-badge">{{ w.continent }}</span>
-                <h3 style="margin: 5px 0; color: #1e3799;">{{ w.city }}</h3>
-                <p style="font-size: 14px; margin: 0;"><strong>{{ w.local_time }}</strong></p>
-                
-                <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" style="width: 80px;" alt="icon">
-                
-                <div style="font-size: 36px; font-weight: bold; color: #2d3436;">{{ w.temp }}°C</div>
-                <p style="text-transform: capitalize; font-weight: bold; color: #444; margin: 5px 0;">{{ w.desc }}</p>
-                <p style="font-size: 12px; color: #555;">Humidity: {{ w.humidity }}%</p>
+                <h3 style="margin: 8px 0; color: #1e3799; text-shadow: 1px 1px 1px white;">{{ w.city }}</h3>
+                <p style="font-size: 14px; margin: 0; color: #111;"><strong>{{ w.local_time }}</strong></p>
+                <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" style="width: 75px;" alt="icon">
+                <div style="font-size: 34px; font-weight: bold; color: #2d3436;">{{ w.temp }}°C</div>
+                <p style="text-transform: capitalize; font-weight: bold; color: #333; margin: 5px 0;">{{ w.desc }}</p>
+                <p style="font-size: 11px; color: #444;">Humidity: {{ w.humidity }}%</p>
             </div>
         </div>
         {% endfor %}
     </div>
 
     {% if weather_list %}
-    <div style="background: white; margin: 30px auto; padding: 20px; border-radius: 20px; max-width: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+    <div style="background: white; margin: 30px auto; padding: 20px; border-radius: 20px; max-width: 800px;">
         <canvas id="weatherChart"></canvas>
     </div>
     <script>
@@ -82,12 +76,7 @@
             type: 'bar',
             data: {
                 labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}],
-                datasets: [{
-                    label: 'Temperature (°C)',
-                    data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
-                    backgroundColor: '#1e3799',
-                    borderRadius: 8
-                }]
+                datasets: [{ label: 'Temp (°C)', data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}], backgroundColor: '#1e3799' }]
             }
         });
     </script>
