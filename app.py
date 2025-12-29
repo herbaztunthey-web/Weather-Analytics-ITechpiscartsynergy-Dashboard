@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
-app.secret_key = 'babatunde_analytics_final_v1'
+app.secret_key = 'babatunde_final_v3_2025'
 
 API_KEY = os.getenv('WEATHER_API_KEY')
 
@@ -38,7 +38,6 @@ def index():
                     local_dt = datetime.now(
                         timezone.utc) + timedelta(seconds=offset)
 
-                    # UNIQUE FLAG LOGIC: Capture specific country code
                     country_code = response['sys']['country'].lower()
                     country_info = gc.get_countries().get(country_code.upper())
                     continent_name = continent_map.get(country_info.get(
@@ -65,7 +64,6 @@ def index():
             except Exception as e:
                 error_msg = "Connection error."
 
-        # Store results in session for the download feature
         session['last_results'] = weather_list
         return render_template('index.html', weather_list=weather_list, report_date=report_date, error_msg=error_msg, history=session['history'])
 
@@ -76,15 +74,11 @@ def index():
 def download_report():
     results = session.get('last_results', [])
     if not results:
-        return "No data to download", 400
-
-    report_content = f"BABATUNDE ABASS - WEATHER ANALYTICS REPORT\nGenerated: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
-    report_content += "="*50 + "\n"
+        return "No data", 400
+    report_content = "WEATHER ANALYTICS REPORT\n" + "="*30 + "\n"
     for w in results:
-        report_content += f"City: {w['city']} ({w['continent']})\nLocal Time: {w['local_time']}\nTemp: {w['temp']}°C\nStatus: {w['desc']}\nHumidity: {w['humidity']}%\n"
-        report_content += "-"*30 + "\n"
-
-    return Response(report_content, mimetype="text/plain", headers={"Content-disposition": "attachment; filename=weather_report.txt"})
+        report_content += f"{w['city']}: {w['temp']}C, {w['desc']}\n"
+    return Response(report_content, mimetype="text/plain", headers={"Content-disposition": "attachment; filename=report.txt"})
 
 
 if __name__ == '__main__':

@@ -16,17 +16,17 @@
         
         .card { 
             padding: 0; border-radius: 20px; width: 280px; transition: 0.3s; 
-            border: 1px solid rgba(255,255,255,0.2); position: relative; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.4); position: relative; overflow: hidden;
             background-size: cover !important; background-position: center !important;
         }
         .glass-overlay {
-            /* MODERN BLUR EFFECT */
-            background: rgba(255, 255, 255, 0.35); 
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            /* FIXED: Low blur and subtle transparency to keep flag clear */
+            background: rgba(255, 255, 255, 0.45); 
+            backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
             padding: 25px; height: 100%; box-sizing: border-box;
         }
-        .card:hover { transform: scale(1.03); }
-        .continent-badge { background: #1e3799; color: white; padding: 2px 12px; border-radius: 20px; font-size: 11px; text-transform: uppercase; }
+        .card:hover { transform: scale(1.05); z-index: 10; }
+        .continent-badge { background: #1e3799; color: white; padding: 2px 12px; border-radius: 20px; font-size: 11px; }
         .btn-download { background: #27ae60; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-left: 10px; display: inline-block; }
         input { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 300px; }
         button { padding: 12px 20px; border-radius: 8px; background: #1e3799; color: white; border: none; cursor: pointer; font-weight: bold; }
@@ -40,13 +40,12 @@
     </div>
 
     <div class="search-box">
-        <h2>Global Analytics Dashboard</h2>
         <form method="POST" style="display: inline-block;">
             <input type="text" name="city" placeholder="Lagos, Tokyo, London..." required>
             <button type="submit">Analyze</button>
         </form>
         {% if weather_list %}
-            <a href="/download" class="btn-download">Download Report (.txt)</a>
+            <a href="/download" class="btn-download">Download Report</a>
         {% endif %}
     </div>
 
@@ -55,12 +54,11 @@
         <div class="card" style="background: url('https://flagcdn.com/w640/{{ w.country_code }}.png');">
             <div class="glass-overlay">
                 <span class="continent-badge">{{ w.continent }}</span>
-                <h3 style="margin: 8px 0; color: #1e3799; text-shadow: 1px 1px 1px white;">{{ w.city }}</h3>
-                <p style="font-size: 14px; margin: 0; color: #111;"><strong>{{ w.local_time }}</strong></p>
-                <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" style="width: 75px;" alt="icon">
-                <div style="font-size: 34px; font-weight: bold; color: #2d3436;">{{ w.temp }}°C</div>
-                <p style="text-transform: capitalize; font-weight: bold; color: #333; margin: 5px 0;">{{ w.desc }}</p>
-                <p style="font-size: 11px; color: #444;">Humidity: {{ w.humidity }}%</p>
+                <h3 style="margin: 8px 0; color: #1e3799; text-shadow: 1px 1px 1px rgba(255,255,255,0.8);">{{ w.city }}</h3>
+                <p style="font-size: 14px; margin: 0; color: #000;"><strong>{{ w.local_time }}</strong></p>
+                <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" style="width: 70px;">
+                <div style="font-size: 34px; font-weight: bold; color: #111;">{{ w.temp }}°C</div>
+                <p style="text-transform: capitalize; font-weight: bold; color: #333;">{{ w.desc }}</p>
             </div>
         </div>
         {% endfor %}
@@ -76,7 +74,13 @@
             type: 'bar',
             data: {
                 labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}],
-                datasets: [{ label: 'Temp (°C)', data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}], backgroundColor: '#1e3799' }]
+                datasets: [{ 
+                    label: 'Temperature (°C)', 
+                    data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
+                    /* FIXED: Return to multi-colored bars */
+                    backgroundColor: ['#1e3799', '#27ae60', '#e67e22', '#e74c3c', '#9b59b6', '#f1c40f'],
+                    borderRadius: 8
+                }]
             }
         });
     </script>
