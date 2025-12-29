@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
-app.secret_key = 'babatunde_pro_analytics_2025'
+app.secret_key = 'babatunde_premium_v8'
 
 API_KEY = os.getenv('WEATHER_API_KEY')
 
@@ -29,8 +29,6 @@ def index():
                     weather_data = {
                         'city': response['name'],
                         'temp': response['main']['temp'],
-                        # SELLING FEATURE 1
-                        'feels_like': response['main']['feels_like'],
                         'humidity': response['main']['humidity'],
                         'desc': response['weather'][0]['description'],
                         'icon': response['weather'][0]['icon'],
@@ -40,14 +38,13 @@ def index():
             except:
                 pass
 
-        # SELLING FEATURE 2: Real-time Statistical Analysis
         if weather_list:
             stats['hottest'] = max(
                 weather_list, key=lambda x: x['temp'])['city']
             stats['coldest'] = min(
                 weather_list, key=lambda x: x['temp'])['city']
             stats['avg_temp'] = round(
-                sum(d['temp'] for d in weather_list) / len(weather_list), 2)
+                sum(d['temp'] for d in weather_list) / len(weather_list), 1)
 
         session['last_results'] = weather_list
         return render_template('index.html', weather_list=weather_list, report_date=report_date, stats=stats)
@@ -66,10 +63,10 @@ def download_report():
     results = session.get('last_results', [])
     if not results:
         return "No data", 400
-    report_content = f"BABATUNDE ABASS | ANALYTICAL WEATHER REPORT\n" + "="*45 + "\n"
+    report_content = f"WEATHER ANALYSIS - BABATUNDE ABASS\n" + "="*40 + "\n"
     for w in results:
-        report_content += f"{w['city']}: {w['temp']}°C (Feels like {w['feels_like']}°C) | {w['desc']}\n"
-    return Response(report_content, mimetype="text/plain", headers={"Content-disposition": "attachment; filename=analysis.txt"})
+        report_content += f"{w['city']}: {w['temp']}°C | {w['desc']}\n"
+    return Response(report_content, mimetype="text/plain", headers={"Content-disposition": "attachment; filename=report.txt"})
 
 
 if __name__ == '__main__':

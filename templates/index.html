@@ -2,18 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Babatunde Abass | Analytical Dashboard</title>
+    <title>Babatunde Abass | Global Intelligence</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background: #f0f2f5; font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding-top: 120px; }
-        .header { background: #1e3799; color: white; padding: 15px 0; width: 100%; position: fixed; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-        .stats-bar { background: #ffffff; padding: 15px; margin: 20px auto; max-width: 900px; border-radius: 10px; display: flex; justify-content: space-around; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid #61dafb; }
-        .stat-item { font-weight: bold; color: #333; }
-        .stat-val { color: #1e3799; display: block; font-size: 18px; }
-        .search-box { background: white; padding: 25px; border-radius: 12px; display: inline-block; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .card { background: white; border-radius: 15px; width: 260px; padding: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); border-top: 5px solid #1e3799; transition: 0.3s; }
-        .card:hover { transform: scale(1.02); }
-        .btn { padding: 10px 20px; border-radius: 5px; font-weight: bold; text-decoration: none; cursor: pointer; border: none; margin: 5px; color: white; }
+        body { 
+            background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding-top: 140px;
+        }
+        .header { background: rgba(0, 0, 0, 0.9); color: #61dafb; padding: 20px 0; width: 100%; position: fixed; top: 0; z-index: 1000; }
+        .stats-bar { background: rgba(255, 255, 255, 0.9); padding: 15px; margin: 20px auto; max-width: 900px; border-radius: 10px; display: flex; justify-content: space-around; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .stat-item { font-weight: bold; color: #1e3799; font-size: 14px; }
+        .stat-val { color: #000; display: block; font-size: 18px; }
+        .search-box { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px; display: inline-block; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .card { background: #fff; border-radius: 20px; width: 260px; padding: 25px; transition: 0.3s; border-top: 8px solid #1e3799; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
+        .btn { padding: 12px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; border: none; margin: 5px; color: white; cursor: pointer; }
         .btn-blue { background: #1e3799; }
         .btn-green { background: #27ae60; }
         .btn-red { background: #e74c3c; }
@@ -23,43 +26,43 @@
 
     <div class="header">
         <h3>BABATUNDE ABASS</h3>
-        <p style="margin:0; font-size: 12px;">DATA & ECONOMICS ANALYST | {{ report_date }}</p>
+        <p style="margin:0; font-size: 12px;">DATA AND ECONOMICS ANALYST | {{ report_date }}</p>
     </div>
 
     <div class="search-box">
         <form method="POST" style="display: inline-block;">
-            <input type="text" name="city" placeholder="Enter cities (e.g. Lagos, Dubai)..." required style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; width: 250px;">
-            <button type="submit" class="btn btn-blue">Analyze Data</button>
+            <input type="text" name="city" placeholder="Lagos, Paris, New York..." required style="padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 250px;">
+            <button type="submit" class="btn btn-blue">Analyze Now</button>
         </form>
         {% if weather_list %}
-            <a href="/download" class="btn btn-green">Export Report</a>
-            <a href="/clear" class="btn btn-red">Clear Data</a>
+            <a href="/download" class="btn btn-green">Export Analysis</a>
+            <a href="/clear" class="btn btn-red">Reset</a>
         {% endif %}
     </div>
 
     {% if stats %}
     <div class="stats-bar">
-        <div class="stat-item">Avg Region Temp: <span class="stat-val">{{ stats.avg_temp }}°C</span></div>
-        <div class="stat-item">Peak Heat Location: <span class="stat-val">{{ stats.hottest }}</span></div>
-        <div class="stat-item">Min Temp Location: <span class="stat-val">{{ stats.coldest }}</span></div>
+        <div class="stat-item">Average Temp: <span class="stat-val">{{ stats.avg_temp }}°C</span></div>
+        <div class="stat-item">Hottest City: <span class="stat-val">{{ stats.hottest }}</span></div>
+        <div class="stat-item">Coldest City: <span class="stat-val">{{ stats.coldest }}</span></div>
     </div>
     {% endif %}
 
     <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px;">
         {% for w in weather_list %}
         <div class="card">
-            <h3 style="margin: 0; color: #1e3799;">{{ w.city }}</h3>
-            <p style="font-size: 12px; color: #777;">Local Time: {{ w.local_time }}</p>
-            <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png">
-            <div style="font-size: 36px; font-weight: bold;">{{ w.temp }}°C</div>
-            <p style="color: #666; font-size: 13px;">Feels Like: <strong>{{ w.feels_like }}°C</strong></p>
-            <p style="text-transform: capitalize; font-weight: bold; color: #444;">{{ w.desc }}</p>
+            <h2 style="margin: 0; color: #1e3799;">{{ w.city }}</h2>
+            <p style="color: #666; font-size: 14px;">{{ w.local_time }}</p>
+            <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" style="width: 80px;">
+            <div style="font-size: 42px; font-weight: 900; color: #333;">{{ w.temp }}°C</div>
+            <p style="text-transform: uppercase; font-weight: bold; color: #555; letter-spacing: 1px;">{{ w.desc }}</p>
         </div>
         {% endfor %}
     </div>
 
     {% if weather_list %}
-    <div style="background: white; margin: 30px auto; padding: 30px; border-radius: 15px; max-width: 900px; box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+    <div style="background: rgba(255,255,255,0.9); margin: 30px auto; padding: 30px; border-radius: 20px; max-width: 1000px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+        <h3 style="color: #333; margin-bottom: 20px;">Comparative Temperature Analysis</h3>
         <canvas id="weatherChart"></canvas>
     </div>
     <script>
@@ -69,9 +72,11 @@
             data: {
                 labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}],
                 datasets: [{ 
-                    label: 'Actual Temp (°C)', 
+                    label: 'Temperature (°C)', 
                     data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
-                    backgroundColor: '#1e3799'
+                    /* VIVID MULTI-COLOR PALETTE */
+                    backgroundColor: ['#007bff', '#28a745', '#dc3545', '#ffc107', '#6610f2', '#fd7e14', '#20c997', '#e83e8c'],
+                    borderRadius: 8
                 }]
             }
         });
