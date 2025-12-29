@@ -2,107 +2,82 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Babatunde Abass | Multi-City Analytics</title>
+    <title>Babatunde Abass | Global Intelligence</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { 
-            background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80');
+            /* DYNAMIC BACKGROUND LOGIC */
+            {% if weather_list and weather_list[0].main_weather == 'rain' %}
+                background-image: url('https://images.unsplash.com/photo-1534274988757-a28bf1f539cf?q=80&w=1920');
+            {% elif weather_list and weather_list[0].main_weather == 'clouds' %}
+                background-image: url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?q=80&w=1920');
+            {% else %}
+                background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1920');
+            {% endif %}
             background-size: cover; background-position: center; background-attachment: fixed;
-            font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding-top: 140px; 
+            font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding-top: 140px; transition: 0.5s;
         }
-        .developer-header {
-            background: rgba(0, 0, 0, 0.9); color: #61dafb; padding: 20px 0;
-            width: 100%; position: fixed; top: 0; left: 0; z-index: 1000;
-        }
-        .search-box {
-            background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px;
-            display: inline-block; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-        .results-container {
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px;
-        }
-        .card { 
-            padding: 25px; border-radius: 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15); width: 260px;
-            transition: transform 0.3s ease; border: 1px solid rgba(255,255,255,0.5);
-        }
-        .card:hover { transform: translateY(-5px); }
-        .continent-badge {
-            background: #1e3799; color: white; padding: 2px 10px; border-radius: 20px;
-            font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
-        }
-        .local-time {
-            font-size: 14px; color: #2d3436; font-weight: bold; margin-top: 5px;
-        }
-        input { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 350px; font-size: 16px; }
-        button { padding: 12px 25px; border-radius: 8px; border: none; background: #1e3799; color: white; cursor: pointer; font-weight: bold; }
+        .developer-header { background: rgba(0, 0, 0, 0.9); color: #61dafb; padding: 20px 0; width: 100%; position: fixed; top: 0; z-index: 1000; }
+        .search-box { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px; display: inline-block; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .error-alert { background: #ff7675; color: white; padding: 10px; border-radius: 8px; margin: 10px auto; width: 80%; max-width: 400px; }
+        .card { padding: 25px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); width: 280px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.5); }
+        .continent-badge { background: #1e3799; color: white; padding: 2px 10px; border-radius: 20px; font-size: 11px; text-transform: uppercase; }
+        .history-tag { display: inline-block; background: rgba(255,255,255,0.8); padding: 5px 12px; margin: 5px; border-radius: 15px; font-size: 12px; color: #1e3799; border: 1px solid #1e3799; }
+        input { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 300px; }
+        button { padding: 12px 20px; border-radius: 8px; background: #1e3799; color: white; border: none; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="developer-header">
         <h3>BABATUNDE ABASS</h3>
-        <p style="margin-bottom: 5px;">DATA AND ECONOMICS ANALYST</p>
-        {% if report_date %}
-            <p style="color: #ffffff; font-size: 14px; margin-top: 0;">
-                Report Generated: <b>{{ report_date }}</b>
-            </p>
-        {% endif %}
+        <p>DATA AND ECONOMICS ANALYST | Report Generated: {{ report_date }}</p>
     </div>
 
     <div class="search-box">
-        <h2 style="margin-top:0;">Comparative Weather Dashboard</h2>
+        <h2>Global Analytics Dashboard</h2>
         <form method="POST">
-            <input type="text" name="city" placeholder="Lagos, London, New York..." required>
-            <button type="submit">Analyze All</button>
+            <input type="text" name="city" placeholder="Enter cities (Lagos, Paris...)" required>
+            <button type="submit">Analyze</button>
         </form>
+        {% if history %}
+            <div style="margin-top: 15px;">
+                <p style="font-size: 12px; margin: 0;">Recent Searches:</p>
+                {% for item in history %}<span class="history-tag">{{ item }}</span>{% endfor %}
+            </div>
+        {% endif %}
     </div>
 
-    {% if weather_list %}
-    <div class="results-container">
-        {% for w in weather_list %}
-        
-        {% set bg_color = "linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)" %}
-        {% if 'clear' in w.desc.lower() %} {% set bg_color = "linear-gradient(135deg, #fff9e6 0%, #ffcc33 100%)" %}
-        {% elif 'cloud' in w.desc.lower() %} {% set bg_color = "linear-gradient(135deg, #f2f2f2 0%, #bdc3c7 100%)" %}
-        {% elif 'rain' in w.desc.lower() or 'drizzle' in w.desc.lower() %} {% set bg_color = "linear-gradient(135deg, #e1f5fe 0%, #4fc3f2 100%)" %}
-        {% endif %}
+    {% if error_msg %}<div class="error-alert">{{ error_msg }}</div>{% endif %}
 
-        <div class="card" style="background: {{ bg_color }};">
+    <div class="results-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+        {% for w in weather_list %}
+        <div class="card" style="background: white;">
             <span class="continent-badge">{{ w.continent }}</span>
-            <h3 style="margin: 10px 0 0 0; color: #1e3799;">{{ w.city }}</h3>
-            <p class="local-time">Local Time: {{ w.local_time }}</p>
-            
-            <div style="background: rgba(255,255,255,0.3); border-radius: 50%; display: inline-block; margin: 5px 0;">
-                <img src="http://openweathermap.org/img/wn/{{ w.icon }}@2x.png" alt="weather icon">
-            </div>
-            
-            <div style="font-size: 36px; font-weight: bold; color: #2d3436;">{{ w.temp }}°C</div>
-            <p style="text-transform: capitalize; font-weight: bold; color: #444;">{{ w.desc }}</p>
-            <p style="font-size: 12px; color: #555;">Humidity: {{ w.humidity }}%</p>
+            <h3 style="margin: 10px 0;">
+                <img src="https://flagcdn.com/w40/{{ w.country_code|lower }}.png" style="width:25px; vertical-align:middle;">
+                {{ w.city }}
+            </h3>
+            <p><strong>{{ w.local_time }}</strong></p>
+            <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" style="width: 80px;">
+            <div style="font-size: 32px; font-weight: bold;">{{ w.temp }}°C</div>
+            <p style="text-transform: capitalize;">{{ w.desc }}</p>
         </div>
         {% endfor %}
     </div>
 
-    <div style="background: white; margin: 30px auto; padding: 20px; border-radius: 20px; max-width: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-        <h4 style="margin-top:0; color: #7f8c8d;">Data Comparison Analysis</h4>
+    {% if weather_list %}
+    <div style="background: white; margin: 30px auto; padding: 20px; border-radius: 20px; max-width: 800px;">
         <canvas id="weatherChart"></canvas>
     </div>
-
     <script>
         const ctx = document.getElementById('weatherChart').getContext('2d');
         new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}],
-                datasets: [{
-                    label: 'Temperature (°C)',
-                    data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
-                    backgroundColor: ['#61dafb', '#1e3799', '#0984e3', '#05c46b'],
-                    borderRadius: 8
-                }]
-            },
-            options: { responsive: true, plugins: { legend: { display: false } } }
+                datasets: [{ label: 'Temp (°C)', data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}], backgroundColor: '#1e3799' }]
+            }
         });
     </script>
     {% endif %}
