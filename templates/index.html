@@ -16,20 +16,21 @@
         
         .card { 
             padding: 0; border-radius: 20px; width: 280px; transition: 0.3s; 
-            border: 2px solid #fff; position: relative; overflow: hidden;
+            border: 3px solid #fff; position: relative; overflow: hidden;
             background-size: cover !important; background-position: center !important;
-            box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.5);
         }
         .glass-overlay {
-            background: rgba(255, 255, 255, 0.2); /* VERY CLEAR */
+            background: rgba(255, 255, 255, 0.1); /* CRYSTAL CLEAR FLAG */
             padding: 25px; height: 100%; box-sizing: border-box;
         }
-        /* HIGH CONTRAST TEXT */
-        .weather-text { color: #000; font-weight: 900; text-shadow: 2px 2px 2px #fff, -1px -1px 0 #fff, 1px -1px 0 #fff; }
-        .continent-badge { background: #1e3799; color: #fff; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; border: 1px solid white; display: inline-block; }
-        .btn-download { background: #00ff88; color: #000; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-left: 10px; display: inline-block; }
-        input { padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 300px; }
-        button { padding: 12px 20px; border-radius: 8px; background: #1e3799; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .weather-text { color: #000; font-weight: 900; text-shadow: 2px 2px 4px #fff, -2px -2px 4px #fff; }
+        .continent-badge { background: #1e3799; color: #fff; padding: 4px 15px; border-radius: 20px; font-size: 11px; font-weight: bold; border: 1px solid white; display: inline-block; margin-bottom: 10px; }
+        
+        .btn { padding: 12px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; cursor: pointer; border: none; font-size: 14px; margin: 5px; }
+        .btn-analyze { background: #1e3799; color: white; }
+        .btn-download { background: #27ae60; color: white; }
+        .btn-reset { background: #e74c3c; color: white; }
     </style>
 </head>
 <body>
@@ -41,11 +42,12 @@
 
     <div class="search-box">
         <form method="POST" style="display: inline-block;">
-            <input type="text" name="city" placeholder="Lagos, London, Ottawa..." required>
-            <button type="submit">Analyze All</button>
+            <input type="text" name="city" placeholder="Egypt, Mexico, London..." style="padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 250px;">
+            <button type="submit" class="btn btn-analyze">Analyze All</button>
         </form>
         {% if weather_list %}
-            <a href="/download" class="btn-download">Download Report</a>
+            <a href="/download" class="btn btn-download">Download Report</a>
+            <a href="/clear" class="btn btn-reset">Reset Dashboard</a>
         {% endif %}
     </div>
 
@@ -54,11 +56,11 @@
         <div class="card" style="background: url('https://flagcdn.com/w640/{{ w.country_code }}.png');">
             <div class="glass-overlay">
                 <span class="continent-badge">{{ w.continent }}</span>
-                <h2 class="weather-text" style="margin: 8px 0;">{{ w.city }}</h2>
-                <p class="weather-text" style="font-size: 14px;">{{ w.local_time }}</p>
-                <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" style="width: 80px; filter: drop-shadow(0 0 5px #fff);">
-                <div class="weather-text" style="font-size: 40px;">{{ w.temp }}°C</div>
-                <p class="weather-text" style="text-transform: uppercase; font-size: 12px;">{{ w.desc }}</p>
+                <h2 class="weather-text" style="margin: 5px 0; font-size: 28px;">{{ w.city }}</h2>
+                <p class="weather-text" style="font-size: 16px;">{{ w.local_time }}</p>
+                <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" style="width: 80px; filter: drop-shadow(0 0 10px white);">
+                <div class="weather-text" style="font-size: 44px;">{{ w.temp }}°C</div>
+                <p class="weather-text" style="text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">{{ w.desc }}</p>
             </div>
         </div>
         {% endfor %}
@@ -66,6 +68,7 @@
 
     {% if weather_list %}
     <div style="background: white; margin: 30px auto; padding: 30px; border-radius: 20px; max-width: 1000px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+        <h3 style="color: #333; margin-bottom: 20px;">Comparative Temperature Analysis</h3>
         <canvas id="weatherChart"></canvas>
     </div>
     <script>
@@ -78,8 +81,13 @@
                     label: 'Temperature (°C)', 
                     data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
                     backgroundColor: ['#007bff', '#28a745', '#dc3545', '#ffc107', '#6610f2', '#fd7e14', '#20c997', '#e83e8c'],
-                    borderWidth: 1
+                    borderWidth: 1,
+                    borderRadius: 8
                 }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
             }
         });
     </script>
