@@ -6,11 +6,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
-app.secret_key = 'babatunde_app_pro_2025'
+app.secret_key = 'babatunde_map_intelligence_2025'
 
 API_KEY = os.getenv('WEATHER_API_KEY')
 
-# --- PWA SERVICE ROUTES ---
+# PWA SERVICE ROUTES
 
 
 @app.route('/manifest.json')
@@ -44,6 +44,8 @@ def index():
                         'humidity': response['main']['humidity'],
                         'desc': response['weather'][0]['description'],
                         'icon': response['weather'][0]['icon'],
+                        'lat': response['coord']['lat'],  # Capture Latitude
+                        'lon': response['coord']['lon'],  # Capture Longitude
                         'local_time': (datetime.now(timezone.utc) + timedelta(seconds=response['timezone'])).strftime("%I:%M %p")
                     }
                     weather_list.append(weather_data)

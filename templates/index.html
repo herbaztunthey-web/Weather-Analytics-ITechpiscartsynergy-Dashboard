@@ -3,17 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Babatunde Weather Pro</title>
+    <title>Babatunde Abass | Global Intelligence</title>
     
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1e3799">
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js');
-        }
-    </script>
-
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         body { 
             background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80');
@@ -23,7 +19,8 @@
         .header { background: rgba(0, 0, 0, 0.9); color: #61dafb; padding: 20px 0; width: 100%; position: fixed; top: 0; z-index: 1000; }
         .stats-bar { background: rgba(255, 255, 255, 0.9); padding: 15px; margin: 10px auto; max-width: 900px; border-radius: 10px; display: flex; justify-content: space-around; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .search-box { background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 15px; display: inline-block; margin-bottom: 20px; }
-        .card { background: #fff; border-radius: 20px; width: 260px; padding: 20px; border-top: 8px solid #1e3799; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
+        #map { height: 450px; width: 90%; margin: 20px auto; border-radius: 20px; border: 4px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1; }
+        .card { background: #fff; border-radius: 20px; width: 250px; padding: 20px; border-top: 8px solid #1e3799; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
         .btn { padding: 12px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; border: none; margin: 5px; color: white; cursor: pointer; }
         .btn-blue { background: #1e3799; } .btn-red { background: #e74c3c; }
     </style>
@@ -32,16 +29,16 @@
 
     <div class="header">
         <h3>BABATUNDE ABASS</h3>
-        <p style="margin:0; font-size: 12px;">WEATHER ANALYST | {{ report_date }}</p>
+        <p style="margin:0; font-size: 12px;">GEOSPATIAL DATA ANALYST | {{ report_date }}</p>
     </div>
 
     <div class="search-box">
         <form method="POST" style="display: inline-block;">
-            <input type="text" name="city" placeholder="Lagos, London..." required style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 200px;">
-            <button type="submit" class="btn btn-blue">Analyze</button>
+            <input type="text" name="city" placeholder="Lagos, London, Tokyo..." required style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 220px;">
+            <button type="submit" class="btn btn-blue">Analyze Global Data</button>
         </form>
         {% if weather_list %}
-            <a href="/clear" class="btn btn-red">Reset</a>
+            <a href="/clear" class="btn btn-red">Clear All</a>
         {% endif %}
     </div>
 
@@ -51,6 +48,21 @@
         <div>Hottest: <strong>{{ stats.hottest }}</strong></div>
         <div>Coldest: <strong>{{ stats.coldest }}</strong></div>
     </div>
+    {% endif %}
+
+    {% if weather_list %}
+    <div id="map"></div>
+    <script>
+        var map = L.map('map').setView([{{ weather_list[0].lat }}, {{ weather_list[0].lon }}], 4);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        {% for w in weather_list %}
+        L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map)
+            .bindPopup("<b>{{ w.city }}</b><br>{{ w.temp }}°C - {{ w.desc }}");
+        {% endfor %}
+    </script>
     {% endif %}
 
     <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px;">
@@ -66,7 +78,7 @@
     </div>
 
     {% if weather_list %}
-    <div style="background: rgba(255,255,255,0.9); margin: 20px auto; padding: 20px; border-radius: 20px; max-width: 900px;">
+    <div style="background: rgba(255,255,255,0.9); margin: 30px auto; padding: 30px; border-radius: 20px; max-width: 1000px;">
         <canvas id="weatherChart"></canvas>
     </div>
     <script>
@@ -86,5 +98,8 @@
     </script>
     {% endif %}
 
+    <script>
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }
+    </script>
 </body>
 </html>
