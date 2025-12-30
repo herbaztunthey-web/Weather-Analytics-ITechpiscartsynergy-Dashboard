@@ -1,0 +1,9 @@
+{
+    "name": "Babatunde Weather App",
+    "short_name": "BabatundeApp",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1e3799",
+    "theme_color": "#1e3799",
+    "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/1163/1163624.png", "sizes": "512x512", "type": "image/png"}]
+  }
