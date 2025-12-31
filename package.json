@@ -1,0 +1,29 @@
+{
+  "name": "weatherapp",
+  "version": "1.0.0",
+  "description": "![Status](https://img.shields.io/badge/Render-Live-brightgreen)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/herbaztunthey-web/Weather-Analytics-ITechpiscartsynergy-Dashboard.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/herbaztunthey-web/Weather-Analytics-ITechpiscartsynergy-Dashboard/issues"
+  },
+  "homepage": "https://github.com/herbaztunthey-web/Weather-Analytics-ITechpiscartsynergy-Dashboard#readme",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-openid-connect": "^2.19.3",
+    "stripe": "^20.1.0"
+  }
+}
