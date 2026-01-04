@@ -1,0 +1,17 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "WeatherDB.",
+            "database": "weather_data.db"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "WeatherAPP",
+            "database": "WeatherDB"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}
