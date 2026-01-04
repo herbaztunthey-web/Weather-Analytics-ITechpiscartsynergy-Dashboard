@@ -74,6 +74,16 @@ def index():
                 response = requests.get(url).json()
                 if response.get('cod') == 200:
                     temp = round(response['main']['temp'], 1)
+
+                    # --- FIXED LOCAL TIME LOGIC ---
+                    # 1. Get current UTC time
+                    utc_now = datetime.now(timezone.utc)
+                    # 2. Get the timezone offset in seconds from API
+                    offset = response.get('timezone', 0)
+                    # 3. Create a timedelta and add it to UTC
+                    city_time = utc_now + timedelta(seconds=offset)
+                    local_time_str = city_time.strftime("%I:%M %p")
+
                     weather_data = {
                         'city': response['name'],
                         'temp': temp,
@@ -82,12 +92,12 @@ def index():
                         'icon': response['weather'][0]['icon'],
                         'lat': response['coord']['lat'],
                         'lon': response['coord']['lon'],
-                        'local_time': (datetime.now(timezone.utc) + timedelta(seconds=response['timezone'])).strftime("%I:%M %p")
+                        'local_time': local_time_str
                     }
                     weather_list.append(weather_data)
                     save_search(response['name'], temp)
-            except:
-                pass
+            except Exception as e:
+                print(f"Error fetching {city}: {e}")
 
         if weather_list:
             stats['hottest'] = max(

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Babatunde Abass | Global Intelligence</title>
+    <title>Babatunde Abass | Global Intelligence Dashboard</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -18,8 +18,9 @@
         .header { background: rgba(0, 0, 0, 0.9); color: #61dafb; padding: 20px 0; width: 100%; position: fixed; top: 0; z-index: 1000; }
         .stats-bar { background: rgba(255, 255, 255, 0.9); padding: 15px; margin: 10px auto; max-width: 900px; border-radius: 10px; display: flex; justify-content: space-around; box-shadow: 0 4px 15px rgba(0,0,0,0.2); align-items: center; }
         .search-box { background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 15px; display: inline-block; margin-bottom: 20px; }
-        #map { height: 450px; width: 90%; margin: 20px auto; border-radius: 20px; border: 4px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1; }
-        .card { background: #fff; border-radius: 20px; width: 250px; padding: 20px; border-top: 8px solid #1e3799; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
+        #map { height: 500px; width: 90%; margin: 20px auto; border-radius: 20px; border: 4px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1; }
+        .card { background: #fff; border-radius: 20px; width: 250px; padding: 20px; border-top: 8px solid #1e3799; box-shadow: 0 12px 24px rgba(0,0,0,0.4); transition: transform 0.3s; }
+        .card:hover { transform: translateY(-10px); }
         .btn { padding: 12px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; border: none; margin: 5px; color: white; cursor: pointer; }
         .btn-blue { background: #1e3799; } .btn-red { background: #e74c3c; } .btn-green { background: #27ae60; }
         .history-item { background: #1e3799; color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; margin: 0 5px; }
@@ -47,7 +48,7 @@
 
     {% if history %}
     <div class="stats-bar" style="background: rgba(0,0,0,0.85); color: #61dafb; border: 1px solid #61dafb;">
-        <span style="font-weight: bold;">LAST SEARCHED:</span>
+        <span style="font-weight: bold;">RECENT QUERIES:</span>
         {% for h_city, h_temp in history %}
             <span class="history-item">📍 {{ h_city }} ({{ h_temp }}°C)</span>
         {% endfor %}
@@ -62,23 +63,52 @@
     </div>
     {% endif %}
 
-    {% if weather_list %}
     <div id="map"></div>
     <script>
-        var map = L.map('map').setView([{{ weather_list[0].lat }}, {{ weather_list[0].lon }}], 4);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+        // Define Map Layers
+        var streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        });
+
+        var satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
+        });
+
+        var topoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data: &copy; OpenTopoMap'
+        });
+
+        // Initialize Map
+        var initialLat = {{ weather_list[0].lat if weather_list else 9.08 }};
+        var initialLon = {{ weather_list[0].lon if weather_list else 8.67 }};
+        
+        var map = L.map('map', {
+            center: [initialLat, initialLon],
+            zoom: 5,
+            layers: [streetMap]
+        });
+
+        // Add Layer Control
+        var baseMaps = {
+            "🏙️ Street View": streetMap,
+            "🛰️ Satellite": satelliteMap,
+            "🏔️ Terrain": topoMap
+        };
+        L.control.layers(baseMaps).addTo(map);
+
+        // Add Markers for current search
         {% for w in weather_list %}
-        L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map).bindPopup("<b>{{ w.city }}</b><br>{{ w.temp }}°C");
+        L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map)
+            .bindPopup("<b>{{ w.city }}</b><br>{{ w.temp }}°C - {{ w.desc }}");
         {% endfor %}
     </script>
-    {% endif %}
 
     <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px;">
         {% for w in weather_list %}
         <div class="card">
             <h2 style="margin: 0; color: #1e3799;">{{ w.city }}</h2>
             <p style="color: #666; font-size: 13px;">{{ w.local_time }}</p>
-            <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png">
+            <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" alt="weather-icon">
             <div style="font-size: 38px; font-weight: 900; color: #333;">{{ w.temp }}°C</div>
             <p style="text-transform: uppercase; font-weight: bold; color: #555;">{{ w.desc }}</p>
         </div>
@@ -86,7 +116,7 @@
     </div>
 
     {% if weather_list %}
-    <div style="background: rgba(255,255,255,0.9); margin: 30px auto; padding: 30px; border-radius: 20px; max-width: 1000px;">
+    <div style="background: rgba(255,255,255,0.9); margin: 30px auto; padding: 30px; border-radius: 20px; max-width: 1000px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
         <canvas id="weatherChart"></canvas>
     </div>
     <script>
@@ -98,13 +128,20 @@
                 datasets: [{ 
                     label: 'Temperature (°C)', 
                     data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
-                    backgroundColor: ['#007bff', '#28a745', '#dc3545', '#ffc107', '#6610f2'],
+                    backgroundColor: ['#1e3799', '#27ae60', '#e74c3c', '#f39c12', '#8e44ad'],
                     borderRadius: 8
                 }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } }
             }
         });
     </script>
     {% endif %}
 
+    <script>
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }
+    </script>
 </body>
 </html>
