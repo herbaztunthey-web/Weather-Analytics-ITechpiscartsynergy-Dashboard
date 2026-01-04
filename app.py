@@ -48,12 +48,10 @@ def export_data():
     conn = sqlite3.connect('final_weather.db')
     cursor = conn.execute('SELECT * FROM history')
     results = cursor.fetchall()
-
     si = io.StringIO()
     cw = csv.writer(si)
     cw.writerow(['City', 'Temperature', 'Timestamp'])
     cw.writerows(results)
-
     return Response(si.getvalue(), mimetype="text/csv",
                     headers={"Content-Disposition": "attachment; filename=weather_history.csv"})
 
@@ -75,14 +73,14 @@ def index():
                 if response.get('cod') == 200:
                     temp = round(response['main']['temp'], 1)
 
-                    # --- FIXED LOCAL TIME LOGIC ---
-                    # 1. Get current UTC time
+                    # --- IMPROVED TIME CALCULATION ---
+                    # Get fresh UTC time for this specific city iteration
                     utc_now = datetime.now(timezone.utc)
-                    # 2. Get the timezone offset in seconds from API
-                    offset = response.get('timezone', 0)
-                    # 3. Create a timedelta and add it to UTC
-                    city_time = utc_now + timedelta(seconds=offset)
-                    local_time_str = city_time.strftime("%I:%M %p")
+                    # Get the timezone shift in seconds from the API
+                    offset_seconds = int(response.get('timezone', 0))
+                    # Apply the shift to UTC
+                    local_dt = utc_now + timedelta(seconds=offset_seconds)
+                    local_time_str = local_dt.strftime("%I:%M %p")
 
                     weather_data = {
                         'city': response['name'],
@@ -96,8 +94,11 @@ def index():
                     }
                     weather_list.append(weather_data)
                     save_search(response['name'], temp)
+                else:
+                    print(
+                        f"⚠️ API Error for {city}: {response.get('message')}")
             except Exception as e:
-                print(f"Error fetching {city}: {e}")
+                print(f"❌ System Error for {city}: {e}")
 
         if weather_list:
             stats['hottest'] = max(
