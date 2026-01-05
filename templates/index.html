@@ -2,55 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Babatunde Abass | Global Intelligence</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        body { background: #0b0e14; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-top: 100px; text-align: center; }
-        .header { background: #161b22; color: #58a6ff; padding: 20px; position: fixed; top: 0; width: 100%; z-index: 1000; border-bottom: 1px solid #30363d; }
-        .search-box { background: #161b22; padding: 25px; border-radius: 12px; display: inline-block; margin: 20px; border: 1px solid #30363d; }
-        .btn { padding: 10px 20px; border-radius: 6px; text-decoration: none; color: white; font-weight: bold; margin: 5px; border: none; cursor: pointer; transition: 0.2s; }
-        .btn:hover { opacity: 0.8; }
-        .btn-blue { background: #238636; } .btn-purple { background: #8957e5; } .btn-red { background: #da3633; } .btn-green { background: #2ea44f; }
-        #map { height: 400px; width: 85%; margin: 20px auto; border-radius: 12px; border: 1px solid #30363d; {% if not weather_list %} display: none; {% endif %} }
-        .card-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
-        .card { background: #161b22; padding: 20px; border-radius: 12px; width: 220px; border: 1px solid #30363d; border-top: 4px solid #58a6ff; }
+        body { 
+            background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding-top: 140px;
+        }
+        .header { background: rgba(0, 0, 0, 0.9); color: #61dafb; padding: 25px 0; width: 100%; position: fixed; top: 0; z-index: 1000; border-bottom: 2px solid #61dafb; }
+        .search-box { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px; display: inline-block; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        #map { height: 500px; width: 90%; margin: 20px auto; border-radius: 20px; border: 4px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); {% if not weather_list %} display: none; {% endif %} }
+        .card { background: white; border-radius: 20px; width: 280px; padding: 25px; border-top: 8px solid #1e3799; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
+        .btn { padding: 12px 25px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; border: none; margin: 5px; color: white; cursor: pointer; }
+        .btn-blue { background: #1e3799; } .btn-purple { background: #8e44ad; } .btn-red { background: #e74c3c; } .btn-green { background: #27ae60; }
+        .stats-bar { background: rgba(255, 255, 255, 0.9); padding: 15px; margin: 10px auto; max-width: 900px; border-radius: 10px; display: flex; justify-content: space-around; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
+
     <div class="header">
         <h2 style="margin:0;">BABATUNDE ABASS</h2>
-        <p style="margin:5px 0 0 0; font-size: 14px; color: #8b949e;">{{ report_date }}</p>
+        <p style="margin:5px; font-size: 14px; letter-spacing: 2px;">GEOSPATIAL DATA ANALYST | {{ report_date }}</p>
     </div>
 
     <div class="search-box">
-        <form method="POST" style="display: inline-block;">
-            <input type="text" name="city" placeholder="Lagos, London..." required style="padding: 10px; width: 250px; background: #0d1117; color: white; border: 1px solid #30363d; border-radius: 6px;">
+        <form method="POST" action="/" style="display: inline-block;">
+            <input type="text" name="city" placeholder="Lagos, London, Tokyo..." required style="padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 250px; font-size: 16px;">
             <button type="submit" class="btn btn-blue">Analyze Data</button>
         </form>
-        {% if history %}<a href="/export" class="btn btn-green">CSV History</a>{% endif %}
+        {% if history %}<a href="/export" class="btn btn-green">Download CSV</a>{% endif %}
         {% if weather_list %}
             <a href="/download_pdf" class="btn btn-purple">Download PDF Report</a>
             <a href="/clear" class="btn btn-red">Clear All</a>
         {% endif %}
     </div>
 
+    {% if stats %}
+    <div class="stats-bar">
+        <div>Avg Temp: <strong>{{ stats.avg_temp }}°C</strong></div>
+        <div>Hottest: <strong>{{ stats.hottest }}</strong></div>
+        <div>Coldest: <strong>{{ stats.coldest }}</strong></div>
+    </div>
+    {% endif %}
+
     <div id="map"></div>
 
-    <div class="card-container">
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; padding: 30px;">
         {% for w in weather_list %}
         <div class="card">
-            <h3 style="margin-top:0;">{{ w.city }}</h3>
-            <p style="font-size: 12px; color: #8b949e;">{{ w.local_time }}</p>
-            <h2 style="font-size: 32px; margin: 10px 0; color: #58a6ff;">{{ w.temp }}°C</h2>
-            <p style="text-transform: capitalize;">{{ w.desc }}</p>
+            <h2 style="margin: 0; color: #1e3799;">{{ w.city }}</h2>
+            <p style="color: #666; font-size: 14px;">{{ w.local_time }}</p>
+            <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" alt="icon">
+            <div style="font-size: 42px; font-weight: 900; color: #333;">{{ w.temp }}°C</div>
+            <p style="text-transform: uppercase; font-weight: bold; color: #555;">{{ w.desc }}</p>
         </div>
         {% endfor %}
     </div>
 
     <script>
         {% if weather_list %}
-        var map = L.map('map').setView([{{ weather_list[0].lat }}, {{ weather_list[0].lon }}], 3);
+        var map = L.map('map').setView([{{ weather_list[0].lat }}, {{ weather_list[0].lon }}], 4);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         {% for w in weather_list %}
         L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map).bindPopup("<b>{{ w.city }}</b>: {{ w.temp }}°C");

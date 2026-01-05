@@ -39,7 +39,6 @@ def download_pdf():
     weather_list = session.get('last_results', [])
     if not weather_list:
         return redirect(url_for('index'))
-
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
@@ -50,7 +49,6 @@ def download_pdf():
     p.drawCentredString(
         width/2, height - 70, f"Analyst: Babatunde Abass | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     p.line(50, height - 80, width - 50, height - 80)
-
     y = height - 120
     for w in weather_list:
         p.setFont("Helvetica-Bold", 12)
@@ -104,9 +102,7 @@ def index():
                     save_search(r['name'], data['temp'])
             except:
                 pass
-
         if weather_list:
-            # This makes the PDF button show up!
             session['last_results'] = weather_list
             stats = {'hottest': max(weather_list, key=lambda x: x['temp'])['city'],
                      'coldest': min(weather_list, key=lambda x: x['temp'])['city'],
@@ -116,7 +112,6 @@ def index():
     history = conn.execute(
         'SELECT city, temp FROM history ORDER BY timestamp DESC LIMIT 5').fetchall()
     conn.close()
-
     return render_template('index.html', weather_list=weather_list, report_date=report_date, stats=stats, history=history)
 
 
