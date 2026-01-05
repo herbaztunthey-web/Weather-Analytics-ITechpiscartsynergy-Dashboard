@@ -15,8 +15,6 @@ app.secret_key = 'babatunde_map_intelligence_2025'
 
 API_KEY = os.getenv('WEATHER_API_KEY')
 
-# --- DATABASE SETUP ---
-
 
 def init_db():
     conn = sqlite3.connect('final_weather.db')
@@ -31,15 +29,6 @@ def save_search(city, temp):
                  (city, temp, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
     conn.commit()
     conn.close()
-
-
-def get_history():
-    conn = sqlite3.connect('final_weather.db')
-    cursor = conn.execute(
-        'SELECT city, temp FROM history ORDER BY timestamp DESC LIMIT 5')
-    rows = cursor.fetchall()
-    conn.close()
-    return rows
 
 
 init_db()
@@ -68,7 +57,7 @@ def download_pdf():
         p.drawString(70, y, f"Location: {w['city']}")
         p.setFont("Helvetica", 11)
         p.drawString(
-            70, y - 18, f"Temp: {w['temp']}°C | Time: {w['local_time']} | Coordinates: {w['lat']}, {w['lon']}")
+            70, y - 18, f"Temp: {w['temp']}°C | Time: {w['local_time']} | Coord: {w['lat']}, {w['lon']}")
         y -= 60
     p.showPage()
     p.save()
@@ -115,13 +104,20 @@ def index():
                     save_search(r['name'], data['temp'])
             except:
                 pass
+
         if weather_list:
+            # This makes the PDF button show up!
+            session['last_results'] = weather_list
             stats = {'hottest': max(weather_list, key=lambda x: x['temp'])['city'],
                      'coldest': min(weather_list, key=lambda x: x['temp'])['city'],
                      'avg_temp': round(sum(d['temp'] for d in weather_list) / len(weather_list), 1)}
-            session['last_results'] = weather_list  # CRITICAL: Save to session
 
-    return render_template('index.html', weather_list=weather_list, report_date=report_date, stats=stats, history=get_history())
+    conn = sqlite3.connect('final_weather.db')
+    history = conn.execute(
+        'SELECT city, temp FROM history ORDER BY timestamp DESC LIMIT 5').fetchall()
+    conn.close()
+
+    return render_template('index.html', weather_list=weather_list, report_date=report_date, stats=stats, history=history)
 
 
 @app.route('/clear')

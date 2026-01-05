@@ -5,33 +5,33 @@
     <title>Babatunde Abass | Global Intelligence</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background: #f4f7f6; font-family: 'Segoe UI', sans-serif; margin: 0; padding-top: 100px; text-align: center; }
-        .header { background: #000; color: #61dafb; padding: 15px; position: fixed; top: 0; width: 100%; z-index: 1000; }
-        .search-box { background: #fff; padding: 20px; border-radius: 10px; display: inline-block; margin: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .btn { padding: 10px 15px; border-radius: 5px; text-decoration: none; color: white; font-weight: bold; margin: 5px; border: none; cursor: pointer; }
-        .btn-blue { background: #1e3799; } .btn-purple { background: #8e44ad; } .btn-red { background: #e74c3c; } .btn-green { background: #27ae60; }
-        #map { height: 400px; width: 90%; margin: 20px auto; border-radius: 15px; {% if not weather_list %} display: none; {% endif %} }
-        .card-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 15px; width: 200px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-top: 5px solid #1e3799; }
+        body { background: #0b0e14; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-top: 100px; text-align: center; }
+        .header { background: #161b22; color: #58a6ff; padding: 20px; position: fixed; top: 0; width: 100%; z-index: 1000; border-bottom: 1px solid #30363d; }
+        .search-box { background: #161b22; padding: 25px; border-radius: 12px; display: inline-block; margin: 20px; border: 1px solid #30363d; }
+        .btn { padding: 10px 20px; border-radius: 6px; text-decoration: none; color: white; font-weight: bold; margin: 5px; border: none; cursor: pointer; transition: 0.2s; }
+        .btn:hover { opacity: 0.8; }
+        .btn-blue { background: #238636; } .btn-purple { background: #8957e5; } .btn-red { background: #da3633; } .btn-green { background: #2ea44f; }
+        #map { height: 400px; width: 85%; margin: 20px auto; border-radius: 12px; border: 1px solid #30363d; {% if not weather_list %} display: none; {% endif %} }
+        .card-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
+        .card { background: #161b22; padding: 20px; border-radius: 12px; width: 220px; border: 1px solid #30363d; border-top: 4px solid #58a6ff; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h2>BABATUNDE ABASS</h2>
-        <p>{{ report_date }}</p>
+        <h2 style="margin:0;">BABATUNDE ABASS</h2>
+        <p style="margin:5px 0 0 0; font-size: 14px; color: #8b949e;">{{ report_date }}</p>
     </div>
 
     <div class="search-box">
         <form method="POST" style="display: inline-block;">
-            <input type="text" name="city" placeholder="Enter cities (Lagos, London)" required style="padding: 10px; width: 200px;">
-            <button type="submit" class="btn btn-blue">Analyze</button>
+            <input type="text" name="city" placeholder="Lagos, London..." required style="padding: 10px; width: 250px; background: #0d1117; color: white; border: 1px solid #30363d; border-radius: 6px;">
+            <button type="submit" class="btn btn-blue">Analyze Data</button>
         </form>
         {% if history %}<a href="/export" class="btn btn-green">CSV History</a>{% endif %}
         {% if weather_list %}
             <a href="/download_pdf" class="btn btn-purple">Download PDF Report</a>
-            <a href="/clear" class="btn btn-red">Clear</a>
+            <a href="/clear" class="btn btn-red">Clear All</a>
         {% endif %}
     </div>
 
@@ -40,20 +40,20 @@
     <div class="card-container">
         {% for w in weather_list %}
         <div class="card">
-            <h3>{{ w.city }}</h3>
-            <p>{{ w.local_time }}</p>
-            <h2 style="font-size: 30px;">{{ w.temp }}°C</h2>
-            <p>{{ w.desc }}</p>
+            <h3 style="margin-top:0;">{{ w.city }}</h3>
+            <p style="font-size: 12px; color: #8b949e;">{{ w.local_time }}</p>
+            <h2 style="font-size: 32px; margin: 10px 0; color: #58a6ff;">{{ w.temp }}°C</h2>
+            <p style="text-transform: capitalize;">{{ w.desc }}</p>
         </div>
         {% endfor %}
     </div>
 
     <script>
         {% if weather_list %}
-        var map = L.map('map').setView([{{ weather_list[0].lat }}, {{ weather_list[0].lon }}], 4);
+        var map = L.map('map').setView([{{ weather_list[0].lat }}, {{ weather_list[0].lon }}], 3);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         {% for w in weather_list %}
-        L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map).bindPopup("{{ w.city }}: {{ w.temp }}°C");
+        L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map).bindPopup("<b>{{ w.city }}</b>: {{ w.temp }}°C");
         {% endfor %}
         {% endif %}
     </script>
