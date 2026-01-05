@@ -21,8 +21,12 @@
         #map { height: 500px; width: 90%; margin: 20px auto; border-radius: 20px; border: 4px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1; }
         .card { background: #fff; border-radius: 20px; width: 250px; padding: 20px; border-top: 8px solid #1e3799; box-shadow: 0 12px 24px rgba(0,0,0,0.4); transition: transform 0.3s; }
         .card:hover { transform: translateY(-10px); }
-        .btn { padding: 12px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; border: none; margin: 5px; color: white; cursor: pointer; }
-        .btn-blue { background: #1e3799; } .btn-red { background: #e74c3c; } .btn-green { background: #27ae60; }
+        .btn { padding: 12px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; border: none; margin: 5px; color: white; cursor: pointer; transition: 0.3s; }
+        .btn:hover { opacity: 0.8; }
+        .btn-blue { background: #1e3799; } 
+        .btn-red { background: #e74c3c; } 
+        .btn-green { background: #27ae60; }
+        .btn-purple { background: #8e44ad; } /* New Color for PDF */
         .history-item { background: #1e3799; color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; margin: 0 5px; }
     </style>
 </head>
@@ -38,10 +42,13 @@
             <input type="text" name="city" placeholder="Lagos, London, Tokyo..." required style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 220px;">
             <button type="submit" class="btn btn-blue">Analyze Global Data</button>
         </form>
+        
         {% if history %}
-            <a href="/export" class="btn btn-green">Download History (CSV)</a>
+            <a href="/export" class="btn btn-green">Download CSV</a>
         {% endif %}
+
         {% if weather_list %}
+            <a href="/download_pdf" class="btn btn-purple">Download PDF Report</a>
             <a href="/clear" class="btn btn-red">Clear All</a>
         {% endif %}
     </div>
@@ -65,7 +72,6 @@
 
     <div id="map"></div>
     <script>
-        // Define Map Layers
         var streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
         });
@@ -78,7 +84,6 @@
             attribution: 'Map data: &copy; OpenTopoMap'
         });
 
-        // Initialize Map
         var initialLat = {{ weather_list[0].lat if weather_list else 9.08 }};
         var initialLon = {{ weather_list[0].lon if weather_list else 8.67 }};
         
@@ -88,7 +93,6 @@
             layers: [streetMap]
         });
 
-        // Add Layer Control
         var baseMaps = {
             "🏙️ Street View": streetMap,
             "🛰️ Satellite": satelliteMap,
@@ -96,7 +100,6 @@
         };
         L.control.layers(baseMaps).addTo(map);
 
-        // Add Markers for current search
         {% for w in weather_list %}
         L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map)
             .bindPopup("<b>{{ w.city }}</b><br>{{ w.temp }}°C - {{ w.desc }}");
