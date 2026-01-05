@@ -6,6 +6,7 @@
     <title>Babatunde Abass | Global Intelligence</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { 
             background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80');
@@ -19,6 +20,7 @@
         .btn { padding: 12px 25px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; border: none; margin: 5px; color: white; cursor: pointer; }
         .btn-blue { background: #1e3799; } .btn-purple { background: #8e44ad; } .btn-red { background: #e74c3c; } .btn-green { background: #27ae60; }
         .stats-bar { background: rgba(255, 255, 255, 0.9); padding: 15px; margin: 10px auto; max-width: 900px; border-radius: 10px; display: flex; justify-content: space-around; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        #chart-container { background: rgba(255,255,255,0.95); margin: 30px auto; padding: 30px; border-radius: 20px; max-width: 1000px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); {% if not weather_list %} display: none; {% endif %} }
     </style>
 </head>
 <body>
@@ -62,32 +64,50 @@
         {% endfor %}
     </div>
 
+    <div id="chart-container">
+        <h3 style="color: #1e3799; margin-top: 0;">Temperature Comparison Analytics</h3>
+        <canvas id="weatherChart"></canvas>
+    </div>
+
     <script>
         {% if weather_list %}
-        // Define Layers
-        var streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+        // LAYERS
+        var streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
         var satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' });
-        var topoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: 'OpenTopoMap' });
+        var topoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { attribution: 'Topo' });
+        
+        // WEATHER OVERLAYS (NEW Level 11)
+        var clouds = L.tileLayer('https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid={{ api_key_from_env }}', { opacity: 0.6 });
+        var precipitation = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid={{ api_key_from_env }}', { opacity: 0.6 });
 
-        // Initialize Map
         var map = L.map('map', {
             center: [{{ weather_list[0].lat }}, {{ weather_list[0].lon }}],
             zoom: 4,
             layers: [streetMap]
         });
 
-        // Layer Controls (The Professional Switch)
-        var baseMaps = {
-            "🏙️ Street View": streetMap,
-            "🛰️ Satellite": satelliteMap,
-            "🏔️ Mountains/Terrain": topoMap
-        };
-        L.control.layers(baseMaps).addTo(map);
+        var baseMaps = { "🏙️ Street": streetMap, "🛰️ Satellite": satelliteMap, "🏔️ Terrain": topoMap };
+        var overlayMaps = { "☁️ Live Clouds": clouds, "🌧️ Live Rain": precipitation };
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
 
-        // Markers
         {% for w in weather_list %}
         L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map).bindPopup("<b>{{ w.city }}</b>: {{ w.temp }}°C");
         {% endfor %}
+
+        // CHART LOGIC
+        const ctx = document.getElementById('weatherChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}],
+                datasets: [{ 
+                    label: 'Temperature (°C)', 
+                    data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
+                    backgroundColor: ['#1e3799', '#27ae60', '#e74c3c', '#f39c12', '#8e44ad'],
+                    borderRadius: 10
+                }]
+            }
+        });
         {% endif %}
     </script>
 </body>

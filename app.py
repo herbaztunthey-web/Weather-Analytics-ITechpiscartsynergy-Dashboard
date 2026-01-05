@@ -112,7 +112,7 @@ def index():
     history = conn.execute(
         'SELECT city, temp FROM history ORDER BY timestamp DESC LIMIT 5').fetchall()
     conn.close()
-    return render_template('index.html', weather_list=weather_list, report_date=report_date, stats=stats, history=history)
+    return render_template('index.html', weather_list=weather_list, report_date=report_date, stats=stats, history=history, api_key_from_env=API_KEY)
 
 
 @app.route('/clear')
