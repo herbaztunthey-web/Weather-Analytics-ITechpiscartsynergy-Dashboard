@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
-app.secret_key = 'babatunde_map_intelligence_2025'
+app.secret_key = 'babatunde_map_intelligence_2026'
 
 API_KEY = os.getenv('WEATHER_API_KEY')
 
