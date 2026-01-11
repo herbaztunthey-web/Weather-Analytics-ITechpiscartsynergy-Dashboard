@@ -8,60 +8,75 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background: #f4f7f6; font-family: 'Segoe UI', sans-serif; padding-top: 100px; text-align: center; }
-        .header { background: #1a1a1a; color: #61dafb; padding: 20px; position: fixed; top:0; width:100%; z-index:1000; }
-        .search-box { background: white; padding: 20px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px; }
-        #map { height: 400px; width: 90%; margin: 20px auto; border-radius: 15px; border: 2px solid #ddd; }
-        .forecast-container { display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-        .forecast-card { background: white; padding: 10px; border-radius: 10px; width: 120px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .unit-toggle { margin-bottom: 10px; font-weight: bold; }
+        body { background: #eef2f3; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-top: 100px; text-align: center; margin: 0; }
+        .header { background: #121212; color: #00d2ff; padding: 20px; position: fixed; top:0; width:100%; z-index:1000; border-bottom: 3px solid #00d2ff; }
+        .search-box { background: white; padding: 25px; border-radius: 12px; display: inline-block; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-top: 30px; }
+        #map { height: 450px; width: 90%; margin: 25px auto; border-radius: 15px; border: 3px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .card-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
+        .card { background: white; border-radius: 15px; width: 260px; padding: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .card:hover { transform: translateY(-5px); }
+        .aqi-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-top: 10px; color: white; }
+        .aqi-1 { background: #27ae60; } /* Good */
+        .aqi-2 { background: #f1c40f; color: black; } /* Fair */
+        .aqi-3 { background: #e67e22; } /* Moderate */
+        .aqi-4 { background: #e74c3c; } /* Poor */
+        .aqi-5 { background: #8e44ad; } /* Very Poor */
+        .forecast-section { background: white; width: 85%; margin: 30px auto; padding: 20px; border-radius: 15px; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h2>BABATUNDE ABASS | GLOBAL LOGISTICS INTELLIGENCE</h2>
+        <h2 style="margin:0;">BABATUNDE ABASS | GEOSPATIAL DATA ANALYTICS</h2>
+        <small>{{ report_date }}</small>
     </div>
 
     <div class="search-box">
-        {% with messages = get_flashed_messages() %}{% if messages %}{% for m in messages %}<p style="color:red">{{m}}</p>{% endfor %}{% endif %}{% endwith %}
-        
+        {% with messages = get_flashed_messages() %}{% if messages %}{% for m in messages %}<p style="color:red">⚠️ {{m}}</p>{% endfor %}{% endif %}{% endwith %}
         <form method="POST" action="/analyze">
-            <div class="unit-toggle">
-                <input type="radio" name="unit" value="metric" {% if unit == 'metric' %}checked{% endif %}> °C 
-                <input type="radio" name="unit" value="imperial" {% if unit == 'imperial' %}checked{% endif %}> °F
+            <div style="margin-bottom: 15px;">
+                <input type="radio" name="unit" value="metric" {% if unit == 'metric' %}checked{% endif %}> Celsius (°C)
+                <input type="radio" name="unit" value="imperial" {% if unit == 'imperial' %}checked{% endif %}> Fahrenheit (°F)
             </div>
-            <input type="text" name="city" placeholder="City Name..." required style="padding: 10px; width: 200px;">
-            <button type="submit" style="padding: 10px; background: #1e3799; color: white; border: none; cursor: pointer;">Analyze</button>
+            <input type="text" name="city" placeholder="Lagos, London, New York..." required style="padding: 12px; width: 250px; border-radius: 8px; border: 1px solid #ddd;">
+            <button type="submit" style="padding: 12px 25px; background: #1e3799; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Run Intelligence</button>
         </form>
     </div>
 
     <div id="map"></div>
 
-    <div style="width: 80%; margin: auto;">
-        <canvas id="forecastChart"></canvas>
+    <div class="card-grid">
+        {% for w in weather_list %}
+        <div class="card">
+            <h3 style="margin-bottom: 5px; color: #1e3799;">{{ w.city }}</h3>
+            <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" width="80">
+            <h1 style="margin: 0;">{{ w.temp }}°</h1>
+            <p style="text-transform: capitalize; color: #555;">{{ w.desc }}</p>
+            
+            <div class="aqi-badge aqi-{{ w.aqi }}">
+                AQI: {{ w.aqi }} 
+                {% if w.aqi == 1 %}(Excellent)
+                {% elif w.aqi == 2 %}(Fair)
+                {% elif w.aqi == 3 %}(Moderate)
+                {% elif w.aqi >= 4 %}(Danger!)
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
     </div>
 
-    <div class="forecast-container">
-        {% for city, forecasts in forecast_data.items() %}
-            <div style="width: 100%;"><h3>5-Day Forecast: {{ city }}</h3></div>
-            {% for f in forecasts %}
-                <div class="forecast-card">
-                    <p><strong>{{ f.date }}</strong></p>
-                    <p>{{ f.temp }}°{{ 'C' if unit == 'metric' else 'F' }}</p>
-                </div>
-            {% endfor %}
-        {% endfor %}
+    <div class="forecast-section">
+        <h3 style="color: #1e3799;">5-Day Predictive Trend</h3>
+        <canvas id="forecastChart"></canvas>
     </div>
 
     <script>
         {% if weather_list %}
-        var map = L.map('map').setView([{{ weather_list[0].lat }}, {{ weather_list[0].lon }}], 5);
+        var map = L.map('map').setView([{{ weather_list[0].lat }}, {{ weather_list[0].lon }}], 4);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         {% for w in weather_list %}
-        L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map).bindPopup("{{ w.city }}: {{ w.temp }}°");
+        L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map).bindPopup("{{ w.city }}: {{ w.temp }}° | AQI: {{ w.aqi }}");
         {% endfor %}
 
-        // Forecast Chart Logic
         const ctx = document.getElementById('forecastChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
@@ -70,9 +85,10 @@
                 datasets: [
                 {% for city, forecasts in forecast_data.items() %}
                 {
-                    label: '{{ city }} Trend',
+                    label: '{{ city }}',
                     data: [{% for f in forecasts %} {{ f.temp }}, {% endfor %}],
-                    borderColor: '#1e3799',
+                    borderColor: '#'+(Math.random()*0xFFFFFF<<0).toString(16),
+                    tension: 0.3,
                     fill: false
                 },
                 {% endfor %}

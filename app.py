@@ -39,8 +39,7 @@ init_db()
 def index():
     weather_list = session.get('last_results', [])
     forecast_data = session.get('forecast_data', {})
-    stats = session.get('last_stats', {})
-    unit = session.get('unit', 'metric')  # Default to Celsius
+    unit = session.get('unit', 'metric')
     report_date = datetime.now().strftime("%B %d, %Y | %H:%M")
 
     conn = sqlite3.connect(DB_PATH)
@@ -52,7 +51,6 @@ def index():
                            weather_list=weather_list,
                            forecast_data=forecast_data,
                            report_date=report_date,
-                           stats=stats,
                            history=history,
                            unit=unit,
                            api_key_from_env=API_KEY)
@@ -69,18 +67,23 @@ def analyze():
     forecast_map = {}
 
     for city in cities:
-        # 1. Current Weather API
         curr_url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&units={unit}&appid={API_KEY}"
-        # 2. 5-Day Forecast API
         fore_url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&units={unit}&appid={API_KEY}"
 
         try:
             r_curr = requests.get(curr_url).json()
             if r_curr.get('cod') == 200:
+                lat, lon = r_curr['coord']['lat'], r_curr['coord']['lon']
+
+                # NEW: Fetch Air Quality Data
+                aqi_url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={API_KEY}"
+                aqi_res = requests.get(aqi_url).json()
+                aqi_val = aqi_res['list'][0]['main']['aqi'] if 'list' in aqi_res else "N/A"
+
                 data = {
                     'city': r_curr['name'], 'temp': round(r_curr['main']['temp'], 1),
                     'desc': r_curr['weather'][0]['description'], 'icon': r_curr['weather'][0]['icon'],
-                    'lat': r_curr['coord']['lat'], 'lon': r_curr['coord']['lon']
+                    'lat': lat, 'lon': lon, 'aqi': aqi_val
                 }
                 weather_list.append(data)
                 save_search(r_curr['name'], data['temp'], unit)
@@ -88,7 +91,6 @@ def analyze():
                 # Fetch Forecast
                 r_fore = requests.get(fore_url).json()
                 if r_fore.get('cod') == "200":
-                    # Filter for midday forecasts (every 24 hours approximately)
                     daily = [item for item in r_fore['list']
                              if "12:00:00" in item['dt_txt']]
                     forecast_map[r_curr['name']] = [
@@ -100,10 +102,6 @@ def analyze():
 
     session['last_results'] = weather_list
     session['forecast_data'] = forecast_map
-    if weather_list:
-        session['last_stats'] = {
-            'avg_temp': round(sum(d['temp'] for d in weather_list) / len(weather_list), 1)
-        }
     return redirect(url_for('index'))
 
 
