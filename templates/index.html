@@ -8,128 +8,75 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { 
-            background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1920&q=80');
-            background-size: cover; background-position: center; background-attachment: fixed;
-            font-family: 'Segoe UI', sans-serif; text-align: center; margin: 0; padding-top: 140px;
-        }
-        #loader {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column;
-            justify-content: center; align-items: center; color: #61dafb;
-        }
-        .spinner {
-            width: 50px; height: 50px; border: 5px solid #333; border-top: 5px solid #61dafb;
-            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .header { background: rgba(0, 0, 0, 0.9); color: #61dafb; padding: 25px 0; width: 100%; position: fixed; top: 0; z-index: 1000; border-bottom: 2px solid #61dafb; }
-        .search-box { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 15px; display: inline-block; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        #map { height: 500px; width: 90%; margin: 20px auto; border-radius: 20px; border: 4px solid white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); {% if not weather_list %} display: none; {% endif %} }
-        .card { background: white; border-radius: 20px; width: 280px; padding: 25px; border-top: 8px solid #1e3799; box-shadow: 0 12px 24px rgba(0,0,0,0.4); }
-        .btn { padding: 12px 25px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; border: none; margin: 5px; color: white; cursor: pointer; }
-        .btn-blue { background: #1e3799; } .btn-purple { background: #8e44ad; } .btn-red { background: #e74c3c; } .btn-green { background: #27ae60; }
-        .stats-bar { background: rgba(255, 255, 255, 0.9); padding: 15px; margin: 10px auto; max-width: 900px; border-radius: 10px; display: flex; justify-content: space-around; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        #chart-container { background: rgba(255,255,255,0.95); margin: 30px auto; padding: 30px; border-radius: 20px; max-width: 1000px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); {% if not weather_list %} display: none; {% endif %} }
-        .error-msg { color: #e74c3c; font-weight: bold; margin-bottom: 15px; display: block; }
+        body { background: #f4f7f6; font-family: 'Segoe UI', sans-serif; padding-top: 100px; text-align: center; }
+        .header { background: #1a1a1a; color: #61dafb; padding: 20px; position: fixed; top:0; width:100%; z-index:1000; }
+        .search-box { background: white; padding: 20px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px; }
+        #map { height: 400px; width: 90%; margin: 20px auto; border-radius: 15px; border: 2px solid #ddd; }
+        .forecast-container { display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .forecast-card { background: white; padding: 10px; border-radius: 10px; width: 120px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .unit-toggle { margin-bottom: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
-
-    <div id="loader">
-        <div class="spinner"></div>
-        <p style="letter-spacing: 3px; font-weight: bold;">FETCHING GEOSPATIAL INTELLIGENCE...</p>
-    </div>
-
     <div class="header">
-        <h2 style="margin:0;">BABATUNDE ABASS</h2>
-        <p style="margin:5px; font-size: 14px; letter-spacing: 2px;">GEOSPATIAL DATA ANALYST | {{ report_date }}</p>
-        <a href="https://itechpiscartsynergy.onrender.com" style="color: white; text-decoration: none; font-size: 12px; border: 1px solid white; padding: 4px 10px; border-radius: 5px;">← Return to Suite Hub</a>
+        <h2>BABATUNDE ABASS | GLOBAL LOGISTICS INTELLIGENCE</h2>
     </div>
 
     <div class="search-box">
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            {% for message in messages %}
-              <span class="error-msg">⚠️ {{ message }}</span>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="/analyze" onsubmit="showLoader()">
-            <input type="text" name="city" placeholder="Lagos, London, Tokyo..." required style="padding: 12px; border-radius: 8px; border: 1px solid #ccc; width: 250px; font-size: 16px;">
-            <button type="submit" class="btn btn-blue">Analyze Data</button>
+        {% with messages = get_flashed_messages() %}{% if messages %}{% for m in messages %}<p style="color:red">{{m}}</p>{% endfor %}{% endif %}{% endwith %}
+        
+        <form method="POST" action="/analyze">
+            <div class="unit-toggle">
+                <input type="radio" name="unit" value="metric" {% if unit == 'metric' %}checked{% endif %}> °C 
+                <input type="radio" name="unit" value="imperial" {% if unit == 'imperial' %}checked{% endif %}> °F
+            </div>
+            <input type="text" name="city" placeholder="City Name..." required style="padding: 10px; width: 200px;">
+            <button type="submit" style="padding: 10px; background: #1e3799; color: white; border: none; cursor: pointer;">Analyze</button>
         </form>
-        {% if history %}<a href="/export" class="btn btn-green">Download CSV</a>{% endif %}
-        {% if weather_list %}
-            <a href="/download_pdf" class="btn btn-purple">Download PDF Report</a>
-            <a href="/clear" class="btn btn-red">Clear All</a>
-        {% endif %}
     </div>
-
-    {% if stats %}
-    <div class="stats-bar">
-        <div>Avg Temp: <strong>{{ stats.avg_temp }}°C</strong></div>
-        <div>Hottest: <strong>{{ stats.hottest }}</strong></div>
-        <div>Coldest: <strong>{{ stats.coldest }}</strong></div>
-    </div>
-    {% endif %}
 
     <div id="map"></div>
 
-    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; padding: 30px;">
-        {% for w in weather_list %}
-        <div class="card">
-            <h2 style="margin: 0; color: #1e3799;">{{ w.city }}</h2>
-            <p style="color: #666; font-size: 14px;">{{ w.local_time }}</p>
-            <img src="https://openweathermap.org/img/wn/{{ w.icon }}@2x.png" alt="icon">
-            <div style="font-size: 42px; font-weight: 900; color: #333;">{{ w.temp }}°C</div>
-            <p style="text-transform: uppercase; font-weight: bold; color: #555;">{{ w.desc }}</p>
-        </div>
-        {% endfor %}
+    <div style="width: 80%; margin: auto;">
+        <canvas id="forecastChart"></canvas>
     </div>
 
-    <div id="chart-container">
-        <h3 style="color: #1e3799; margin-top: 0;">Temperature Comparison Analytics</h3>
-        <canvas id="weatherChart"></canvas>
+    <div class="forecast-container">
+        {% for city, forecasts in forecast_data.items() %}
+            <div style="width: 100%;"><h3>5-Day Forecast: {{ city }}</h3></div>
+            {% for f in forecasts %}
+                <div class="forecast-card">
+                    <p><strong>{{ f.date }}</strong></p>
+                    <p>{{ f.temp }}°{{ 'C' if unit == 'metric' else 'F' }}</p>
+                </div>
+            {% endfor %}
+        {% endfor %}
     </div>
 
     <script>
-        function showLoader() { document.getElementById('loader').style.display = 'flex'; }
-
         {% if weather_list %}
-        var streetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' });
-        var satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' });
-        
-        // Map Overlays (Needs API KEY)
-        var clouds = L.tileLayer('https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid={{ api_key_from_env }}', { opacity: 0.6 });
-        var precipitation = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid={{ api_key_from_env }}', { opacity: 0.6 });
-
-        var map = L.map('map', {
-            center: [{{ weather_list[0].lat }}, {{ weather_list[0].lon }}],
-            zoom: 4,
-            layers: [streetMap]
-        });
-
-        var baseMaps = { "🏙️ Street": streetMap, "🛰️ Satellite": satelliteMap };
-        var overlayMaps = { "☁️ Live Clouds": clouds, "🌧️ Live Rain": precipitation };
-        L.control.layers(baseMaps, overlayMaps).addTo(map);
-
+        var map = L.map('map').setView([{{ weather_list[0].lat }}, {{ weather_list[0].lon }}], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         {% for w in weather_list %}
-        L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map).bindPopup("<b>{{ w.city }}</b>: {{ w.temp }}°C");
+        L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map).bindPopup("{{ w.city }}: {{ w.temp }}°");
         {% endfor %}
 
-        const ctx = document.getElementById('weatherChart').getContext('2d');
+        // Forecast Chart Logic
+        const ctx = document.getElementById('forecastChart').getContext('2d');
         new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
-                labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}],
-                datasets: [{ 
-                    label: 'Temperature (°C)', 
-                    data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
-                    backgroundColor: ['#1e3799', '#27ae60', '#e74c3c', '#f39c12', '#8e44ad'],
-                    borderRadius: 10
-                }]
+                labels: [{% for f in forecast_data.values()|first %} "{{ f.date }}", {% endfor %}],
+                datasets: [
+                {% for city, forecasts in forecast_data.items() %}
+                {
+                    label: '{{ city }} Trend',
+                    data: [{% for f in forecasts %} {{ f.temp }}, {% endfor %}],
+                    borderColor: '#1e3799',
+                    fill: false
+                },
+                {% endfor %}
+                ]
             }
         });
         {% endif %}
