@@ -73,7 +73,7 @@
 
             new Chart(document.getElementById('barChart'), {
                 type: 'bar',
-                data: { labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}], datasets: [{ label: 'Temp', data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}], backgroundColor: '#1e3799' }] },
+                data: { labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}], datasets: [{ label: 'Current Temp', data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}], backgroundColor: '#1e3799' }] },
                 options: { maintainAspectRatio: false }
             });
 
@@ -81,7 +81,16 @@
                 type: 'line',
                 data: {
                     labels: [{% for f in forecast_data.values()|first %} "{{ f.date }}", {% endfor %}],
-                    datasets: [{% for city, forecasts in forecast_data.items() %}{ label: '{{ city }}', data: [{% for f in forecasts %} {{ f.temp }}, {% endfor %}], borderColor: '#'+(Math.random()*0xFFFFFF<<0).toString(16), fill: false },{% endfor %}]
+                    datasets: [
+                    {% for city, forecasts in forecast_data.items() %}
+                    {
+                        label: '{{ city }}',
+                        data: [{% for f in forecasts %} {{ f.temp }}, {% endfor %}],
+                        borderColor: '#'+(Math.random()*0xFFFFFF<<0).toString(16),
+                        fill: false
+                    },
+                    {% endfor %}
+                    ]
                 },
                 options: { maintainAspectRatio: false }
             });
