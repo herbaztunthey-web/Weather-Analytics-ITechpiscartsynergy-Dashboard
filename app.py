@@ -16,6 +16,27 @@ app.secret_key = 'babatunde_map_intelligence_2026'
 API_KEY = os.getenv('WEATHER_API_KEY')
 DB_PATH = os.path.join(os.getcwd(), 'final_weather.db')
 
+# --- DATABASE AUTO-FIX FOR RENDER ---
+
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        # Creates table if it doesn't exist
+        conn.execute('''CREATE TABLE IF NOT EXISTS history 
+                        (city TEXT, temp REAL, unit TEXT, timestamp TEXT)''')
+        # Fixes the "no such column: unit" error automatically
+        try:
+            conn.execute('ALTER TABLE history ADD COLUMN unit TEXT')
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        conn.commit()
+    finally:
+        conn.close()
+
+
+init_db()
+
 
 @app.route('/')
 def index():
@@ -43,26 +64,22 @@ def analyze():
     forecast_map = {}
 
     for city in cities:
-        # Note: Standard One Call API or Alert API required for 'alerts' field
         curr_url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&units={unit}&appid={API_KEY}"
         fore_url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&units={unit}&appid={API_KEY}"
-
         try:
             r_curr = requests.get(curr_url).json()
             if r_curr.get('cod') == 200:
                 lat, lon = r_curr['coord']['lat'], r_curr['coord']['lon']
 
-                # Check for severe conditions in description to simulate alerts if using free tier
+                # Severe Weather Alert Logic
                 desc = r_curr['weather'][0]['description'].lower()
                 has_alert = any(word in desc for word in [
                                 'storm', 'hurricane', 'tornado', 'heavy', 'danger'])
                 alert_msg = f"SEVERE WEATHER: {desc.upper()}" if has_alert else None
 
-                data = {
-                    'city': r_curr['name'], 'temp': round(r_curr['main']['temp'], 1),
-                    'desc': r_curr['weather'][0]['description'], 'icon': r_curr['weather'][0]['icon'],
-                    'lat': lat, 'lon': lon, 'alert': alert_msg
-                }
+                data = {'city': r_curr['name'], 'temp': round(r_curr['main']['temp'], 1),
+                        'desc': r_curr['weather'][0]['description'], 'icon': r_curr['weather'][0]['icon'],
+                        'lat': lat, 'lon': lon, 'alert': alert_msg}
                 weather_list.append(data)
 
                 conn = sqlite3.connect(DB_PATH)
@@ -91,34 +108,42 @@ def download_pdf():
     history = conn.execute(
         'SELECT city, temp, unit, timestamp FROM history ORDER BY timestamp DESC LIMIT 20').fetchall()
     conn.close()
+
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
+
+    # --- PROFESSIONAL TABLE HEADER ---
     p.setFillColor(colors.HexColor("#1e3799"))
     p.rect(0, height - 80, width, 80, fill=1)
     p.setFillColor(colors.white)
-    p.setFont("Helvetica-Bold", 18)
+    p.setFont("Helvetica-Bold", 16)
     p.drawString(50, height - 45,
-                 "WEATHER FORECAST, DATA ANALYSIS INTELLIGENCE REPORT")
+                 "WEATHER FORECAST, DATA ANALYSIS INTELLIGENCE SEARCH REPORT")
+
     y = height - 120
     p.setFillColor(colors.black)
     p.setFont("Helvetica-Bold", 12)
     p.drawString(50, y, "LOCATION")
-    p.drawString(200, y, "TEMP")
-    p.drawString(300, y, "TIMESTAMP (UTC)")
+    p.drawString(200, y, "TEMPERATURE")
+    p.drawString(350, y, "DATE/TIME")
     p.line(50, y - 5, 550, y - 5)
+
+    # --- TABLE ROWS ---
     y -= 25
     p.setFont("Helvetica", 11)
     for city, temp, unit, ts in history:
         if y < 50:
             p.showPage()
             y = height - 50
+        symbol = "°C" if unit == 'metric' else "°F"
         p.drawString(50, y, str(city))
-        p.drawString(200, y, f"{temp}{'°C' if unit == 'metric' else '°F'}")
-        p.drawString(300, y, str(ts))
+        p.drawString(200, y, f"{temp}{symbol}")
+        p.drawString(350, y, str(ts))
         p.setStrokeColor(colors.lightgrey)
         p.line(50, y - 5, 550, y - 5)
         y -= 25
+
     p.showPage()
     p.save()
     buffer.seek(0)
