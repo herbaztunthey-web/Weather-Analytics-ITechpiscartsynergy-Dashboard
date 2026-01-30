@@ -1,5 +1,5 @@
 import os
-import io  # Fixed: Imported independently
+import io
 import requests
 from flask import Flask, render_template, request, send_file
 from reportlab.pdfgen import canvas
@@ -8,8 +8,8 @@ from reportlab.lib.pagesizes import letter
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
-# Use your stored key from 2026-01-11
-API_KEY = "aad4cbdae56d6d693c4f99064fe46dcd"
+# This now matches the "Variable Name" box on Render
+API_KEY = os.environ.get("OPENWEATHER_API_KEY")
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
 
 # --- 1. THE HUB ---
@@ -26,6 +26,10 @@ def home():
 def analyze():
     city = request.form.get('city')
     units = request.form.get('unit', 'metric')
+
+    # Security check: If the API Key is missing from Render, show an error
+    if not API_KEY:
+        return "Error: OPENWEATHER_API_KEY not found in Render Environment Variables.", 500
 
     params = {'q': city, 'appid': API_KEY, 'units': units}
     response = requests.get(BASE_URL, params=params).json()
@@ -49,7 +53,7 @@ def analyze():
 
 @app.route('/download_pdf')
 def download_pdf():
-    buffer = io.BytesIO()  # Now works because io is imported correctly
+    buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
 
     c.setFont("Helvetica-Bold", 18)
@@ -90,5 +94,5 @@ def solar():
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 10000))  # Render uses 10000 by default
     app.run(host='0.0.0.0', port=port)
