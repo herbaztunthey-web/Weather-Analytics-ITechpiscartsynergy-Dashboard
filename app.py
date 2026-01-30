@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template
 
 app = Flask(__name__)
@@ -9,11 +10,12 @@ app = Flask(__name__)
 def home():
     return render_template('index.html')
 
-# 2. The Weather Module
+# 2. The Weather Module (Updated for Global Data)
 
 
 @app.route('/weather')
 def weather():
+    # This is where we will eventually pass our API data
     return render_template('weather.html')
 
 # 3. The Maritime Module
@@ -32,4 +34,6 @@ def solar():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # RENDER REQUIREMENT: Use the PORT environment variable
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
