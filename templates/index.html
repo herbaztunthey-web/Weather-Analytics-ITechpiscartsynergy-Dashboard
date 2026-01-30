@@ -15,7 +15,7 @@
         .chart-col { flex: 1; background: white; padding: 15px; border-radius: 15px; height: 350px; }
         .forecast-row { width: 95%; margin: 20px auto; background: white; padding: 20px; border-radius: 15px; }
         .card { background: white; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .btn { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; text-decoration: none; }
+        .btn { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-block; }
     </style>
 </head>
 <body>
@@ -51,6 +51,18 @@
             {% endfor %}
         </div>
         <div class="chart-col"><canvas id="barChart"></canvas></div>
+    </div>
+
+    <div style="width: 95%; margin: 20px auto; display: flex; justify-content: space-between; align-items: center; background: #1e3799; color: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h4 style="margin:0;">🚀 Global Intelligence Sharing</h4>
+            <small>Invite others to analyze these trends</small>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="https://api.whatsapp.com/send?text=Check out the Global Intelligence Hub by Babatunde Abass! 🌍 {{ request.url }}" target="_blank" class="btn" style="background:#25D366; color:white;">WhatsApp</a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" target="_blank" class="btn" style="background:#4267B2; color:white;">Facebook</a>
+            <a href="https://twitter.com/intent/tweet?text=Real-time intelligence via @BabatundeAbass 📊&url={{ request.url }}" target="_blank" class="btn" style="background:#000000; color:white;">Post to X</a>
+        </div>
     </div>
 
     <div class="forecast-row">
