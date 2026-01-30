@@ -1,13 +1,15 @@
 import os
+import io  # Fixed: Imported independently
 import requests
-from flask import Flask, render_template, request, send_file, io
+from flask import Flask, render_template, request, send_file
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
-API_KEY = "aad4cbdae56d6d693c4f99064fe46dcd"  # Ensure your key is active
+# Use your stored key from 2026-01-11
+API_KEY = "aad4cbdae56d6d693c4f99064fe46dcd"
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
 
 # --- 1. THE HUB ---
@@ -17,7 +19,7 @@ BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
 def home():
     return render_template('index.html')
 
-# --- 2. THE WEATHER MODULE (With API Logic) ---
+# --- 2. THE WEATHER MODULE ---
 
 
 @app.route('/analyze', methods=['POST'])
@@ -25,11 +27,9 @@ def analyze():
     city = request.form.get('city')
     units = request.form.get('unit', 'metric')
 
-    # Fetching real data for the dashboard
     params = {'q': city, 'appid': API_KEY, 'units': units}
     response = requests.get(BASE_URL, params=params).json()
 
-    # Simple list for the template to loop through
     weather_list = []
     if response.get('cod') == 200:
         weather_list.append({
@@ -44,31 +44,27 @@ def analyze():
 
     return render_template('weather.html', weather_list=weather_list)
 
-# --- 3. THE BRANDED PDF ENGINE (The Babatunde Abass Stamp) ---
+# --- 3. THE BRANDED PDF ENGINE ---
 
 
 @app.route('/download_pdf')
 def download_pdf():
-    buffer = io.BytesIO()
+    buffer = io.BytesIO()  # Now works because io is imported correctly
     c = canvas.Canvas(buffer, pagesize=letter)
 
-    # Header Branding
     c.setFont("Helvetica-Bold", 18)
-    c.setFillColorRGB(0.12, 0.22, 0.6)  # Professional Blue
+    c.setFillColorRGB(0.12, 0.22, 0.6)
     c.drawString(100, 750, "BABATUNDE ABASS | INTELLIGENCE REPORT")
 
-    # Divider Line
-    c.setStrokeColorRGB(0, 0.82, 1.0)  # Hub Cyan
+    c.setStrokeColorRGB(0, 0.82, 1.0)
     c.line(100, 740, 500, 740)
 
-    # Body Text
     c.setFont("Helvetica", 12)
     c.setFillColorRGB(0, 0, 0)
     c.drawString(100, 710, "Report Status: Official Data Forecast")
     c.drawString(
         100, 690, "Generated via: The Babatunde Abass Intelligence Hub")
 
-    # Footer Branding
     c.setFont("Helvetica-Oblique", 10)
     c.drawString(
         100, 50, "© 2026 Babatunde Abass | Data Analytics & Global Forecasting")
