@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Maritime Logistics | Synergy Suite</title>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; text-align: center; }
+        .box { background: #1e293b; padding: 20px; border-radius: 15px; width: 80%; margin: auto; border: 1px solid #38bdf8; }
+        .btn { background: #38bdf8; color: black; padding: 10px; border: none; border-radius: 5px; cursor: pointer; }
+        .result-item { background: #0f172a; padding: 10px; margin: 10px; border-left: 5px solid #38bdf8; text-align: left; }
+    </style>
+</head>
+<body>
+    <h1>🚢 MARITIME LOGISTICS ENGINE</h1>
+    <div class="box">
+        <form method="POST">
+            <input type="text" name="port_name" placeholder="Enter Port (e.g. Rotterdam)" required style="padding:10px;">
+            <select name="vessel_type" style="padding:10px;">
+                <option value="Container">Container Ship</option>
+                <option value="Tanker">Oil Tanker</option>
+            </select>
+            <button type="submit" class="btn">Calculate OPEX</button>
+        </form>
+
+        {% if data %}
+        <div style="margin-top:20px;">
+            <div class="result-item"><strong>Target Port:</strong> {{ data.port }}</div>
+            <div class="result-item"><strong>Fuel OPEX:</strong> {{ data.fuel_opex }}</div>
+            <div class="result-item"><strong>Status:</strong> {{ data.status }}</div>
+        </div>
+        {% endif %}
+    </div>
+    <br><a href="/" style="color:#38bdf8;">Back to Synergy Hub</a>
+</body>
+</html>
