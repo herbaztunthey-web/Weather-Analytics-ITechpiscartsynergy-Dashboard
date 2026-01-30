@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Babatunde Abass | Weather Intelligence</title>
+    <style>
+        body { background: #f8fafc; font-family: 'Arial', sans-serif; margin: 0; padding-top: 60px; }
+        .nav { background: #1e293b; color: white; padding: 15px; position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; }
+        .card { background: white; max-width: 600px; margin: 40px auto; padding: 25px; border-radius: 12px; shadow: 0 4px 6px rgba(0,0,0,0.1); border-top: 4px solid #3b82f6; }
+        .btn-download { background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; display: inline-block; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <span><strong>BABATUNDE ABASS</strong> HUB</span>
+        <a href="/" style="color: white; text-decoration: none;">Home</a>
+    </div>
+
+    <div class="card">
+        <h1>Weather Intelligence Dashboard</h1>
+        {% if weather_list %}
+            {% for w in weather_list %}
+                <h2>City: {{ w.city }}</h2>
+                <p>Temperature: {{ w.temp }}°C</p>
+                <p>Condition: {{ w.desc }}</p>
+                <img src="http://openweathermap.org/img/wn/{{ w.icon }}@2x.png" alt="icon">
+            {% endfor %}
+            <br>
+            <a href="/download_pdf" class="btn-download">Download Branded PDF Report</a>
+        {% else %}
+            <p>No data found. Please search from the Home page.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
