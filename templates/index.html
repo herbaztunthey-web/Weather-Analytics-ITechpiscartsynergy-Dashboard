@@ -59,28 +59,22 @@
     </div>
 
     <script>
-        // 1. Initialize Map Object immediately
         var map = L.map('map').setView([0, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    
-        // 2. Wrap everything in a window.onload to ensure HTML is 100% ready
+
         window.onload = function() {
             {% if weather_list %}
                 var coords = [];
-                
-                // Add Markers
                 {% for w in weather_list %}
                     L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map)
                         .bindPopup("<b>{{ w.city }}</b><br>{{ w.temp }}°C");
                     coords.push([{{ w.lat }}, {{ w.lon }}]);
                 {% endfor %}
-    
-                // Auto-Zoom to fit all cities
+
                 if (coords.length > 0) {
                     map.fitBounds(coords, {padding: [50, 50]});
                 }
-    
-                // Draw the Bar Chart
+
                 new Chart(document.getElementById('barChart'), {
                     type: 'bar',
                     data: {
@@ -91,17 +85,11 @@
                             backgroundColor: [{% for w in weather_list %} {{ "'#e74c3c'" if w.temp < 0 else "'#1e3799'" }}, {% endfor %}]
                         }]
                     },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false 
-                    }
+                    options: { responsive: true, maintainAspectRatio: false }
                 });
                 
-                // THE CRITICAL FIX: The "Heartbeat"
-                // This forces the map to recalculate its width/height so it isn't empty.
-                setTimeout(function(){ 
-                    map.invalidateSize(); 
-                }, 800); 
+                // Force map resize fix
+                setTimeout(function(){ map.invalidateSize(); }, 800);
             {% endif %}
         };
     </script>

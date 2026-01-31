@@ -1,7 +1,7 @@
 import os
 import io
 import requests
-from datetime import datetime  # Added for Timestamp
+from datetime import datetime
 from flask import Flask, render_template, request, send_file, session
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
@@ -61,40 +61,25 @@ def download_pdf():
 
     # Title & Timestamp
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    title = Paragraph(
-        "BABATUNDE ABASS | WEATHER INTELLIGENCE REPORT", styles['Title'])
-    ts = Paragraph(
-        f"<font size=9>Report Generated: {now}</font>", styles['Normal'])
-
-    elements.append(title)
-    elements.append(ts)
+    elements.append(
+        Paragraph("BABATUNDE ABASS | WEATHER INTELLIGENCE REPORT", styles['Title']))
+    elements.append(Paragraph(f"Generated: {now}", styles['Normal']))
     elements.append(Spacer(1, 20))
 
-    # Table Data
+    # Professional Table
     data = [["CITY NAME", "TEMPERATURE", "WEATHER CONDITION"]]
-    total_temp = 0
     for item in weather_list:
         data.append([item['city'], f"{item['temp']}°C", item['desc'].title()])
-        total_temp += item['temp']
 
     report_table = Table(data, colWidths=[180, 100, 200])
-    style = TableStyle([
+    report_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#1e3799")),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('GRID', (0, 0), (-1, -1), 1, colors.grey),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.white])
-    ])
-    report_table.setStyle(style)
+    ]))
     elements.append(report_table)
-
-    if weather_list:
-        elements.append(Spacer(1, 30))
-        avg_temp = round(total_temp / len(weather_list), 2)
-        summary = Paragraph(
-            f"<b>Data Summary:</b> {len(weather_list)} Locations | Avg Temp: {avg_temp}°C", styles['Normal'])
-        elements.append(summary)
 
     doc.build(elements)
     buffer.seek(0)
