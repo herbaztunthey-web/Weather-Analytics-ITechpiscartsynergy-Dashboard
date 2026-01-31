@@ -29,7 +29,7 @@
 
     <div style="text-align:center; margin-top:20px;">
         <form method="POST" action="/analyze">
-            <input type="text" name="city" placeholder="Lagos, London, Tokyo..." required style="padding:10px; width:250px; border-radius:5px; border:1px solid #ccc;">
+            <input type="text" name="city" placeholder="E.g. Ibadan, Dubai, Spain" required style="padding:10px; width:300px; border-radius:5px; border:1px solid #ccc;">
             <button type="submit" class="btn" style="background:#1e3799; color:white;">Analyze Data</button>
             <a href="/" class="btn" style="background:#555; color:white;">Reset Hub</a>
         </form>
@@ -53,29 +53,21 @@
     </div>
 
     <script>
-        // 1. Initialize Map
         var map = L.map('map').setView([0, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         {% if weather_list %}
             var coords = [];
-            
-            // 2. THIS IS THE MAP MAKER CODE (The Loop)
             {% for w in weather_list %}
-                // This line creates a marker for EVERY city in the memory
                 L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map)
                     .bindPopup("<b>{{ w.city }}</b><br>{{ w.temp }}°C");
-                
-                // Add coordinates to a list to zoom the map correctly
                 coords.push([{{ w.lat }}, {{ w.lon }}]);
             {% endfor %}
 
-            // 3. Zoom the map to show ALL markers at once
             if (coords.length > 0) {
                 map.fitBounds(coords);
             }
 
-            // 4. THE CHART MAKER CODE
             new Chart(document.getElementById('barChart'), {
                 type: 'bar',
                 data: {
