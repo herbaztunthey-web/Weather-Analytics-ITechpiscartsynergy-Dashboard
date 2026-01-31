@@ -59,12 +59,12 @@
     </div>
 
     <script>
-        // Initialize Map immediately
+        // 1. Initialize Map Object immediately
         var map = L.map('map').setView([0, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     
-        // Force all visuals to load only when the Page is 100% ready
-        document.addEventListener("DOMContentLoaded", function() {
+        // 2. Wrap everything in a window.onload to ensure HTML is 100% ready
+        window.onload = function() {
             {% if weather_list %}
                 var coords = [];
                 
@@ -75,14 +75,13 @@
                     coords.push([{{ w.lat }}, {{ w.lon }}]);
                 {% endfor %}
     
-                // Restore the "Prop2" Auto-Zoom
+                // Auto-Zoom to fit all cities
                 if (coords.length > 0) {
                     map.fitBounds(coords, {padding: [50, 50]});
                 }
     
-                // Restore the "Prop2" Bar Chart
-                var ctx = document.getElementById('barChart').getContext('2d');
-                new Chart(ctx, {
+                // Draw the Bar Chart
+                new Chart(document.getElementById('barChart'), {
                     type: 'bar',
                     data: {
                         labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}],
@@ -98,12 +97,13 @@
                     }
                 });
                 
-                // THE MASTER FIX: Force the map to recalculate its width/height
+                // THE CRITICAL FIX: The "Heartbeat"
+                // This forces the map to recalculate its width/height so it isn't empty.
                 setTimeout(function(){ 
                     map.invalidateSize(); 
-                }, 600);
+                }, 800); 
             {% endif %}
-        });
+        };
     </script>
 </body>
 </html>
