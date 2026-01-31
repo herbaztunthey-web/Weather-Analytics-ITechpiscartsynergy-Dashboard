@@ -75,7 +75,8 @@
                     datasets: [{
                         label: 'Temperature Comparison',
                         data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
-                        backgroundColor: '#1e3799'
+                        // DYNAMIC COLOR LOGIC: Red for < 0, Blue for >= 0
+                        backgroundColor: [{% for w in weather_list %} {{ "'#e74c3c'" if w.temp < 0 else "'#1e3799'" }}, {% endfor %}]
                     }]
                 },
                 options: { maintainAspectRatio: false }
