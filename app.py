@@ -6,20 +6,17 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
 app = Flask(__name__)
-app.secret_key = "babatunde_intelligence_secret_key"  # Needed for sessions
+app.secret_key = "babatunde_secret_key_2026"  # This enables the 'memory'
 
-# --- CONFIGURATION ---
 API_KEY = os.environ.get("OPENWEATHER_API_KEY")
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
-FORECAST_URL = "http://api.openweathermap.org/data/2.5/forecast"
 
 
 @app.route('/')
 def home():
-    # Initialize sessions if they don't exist
-    if 'weather_list' not in session:
-        session['weather_list'] = []
-    return render_template('index.html', weather_list=session['weather_list'])
+    # Clear session on home visit to start a fresh report
+    session['weather_list'] = []
+    return render_template('index.html', weather_list=[])
 
 
 @app.route('/analyze', methods=['POST'])
@@ -27,78 +24,67 @@ def analyze():
     city = request.form.get('city')
     units = request.form.get('unit', 'metric')
 
-    if not API_KEY:
-        return "Error: API Key missing.", 500
-
-    # 1. Fetch Current Weather
     params = {'q': city, 'appid': API_KEY, 'units': units}
-    resp = requests.get(BASE_URL, params=params).json()
+    response = requests.get(BASE_URL, params=params).json()
 
-    if resp.get('cod') == 200:
-        new_data = {
-            'city': resp['name'],
-            'temp': resp['main']['temp'],
-            'desc': resp['weather'][0]['description'],
-            'icon': resp['weather'][0]['icon'],
-            'lat': resp['coord']['lat'],
-            'lon': resp['coord']['lon']
-        }
+    # Get the current list from memory, or start a new one
+    weather_list = session.get('weather_list', [])
 
-        # Add to session list (prevents "only one city" flaw)
-        w_list = session.get('weather_list', [])
-        # Keep only the last 5 searches to keep charts clean
-        w_list.insert(0, new_data)
-        session['weather_list'] = w_list[:5]
+    if response.get('cod') == 200:
+        weather_list.append({
+            'city': response['name'],
+            'temp': response['main']['temp'],
+            'desc': response['weather'][0]['description'],
+            'icon': response['weather'][0]['icon'],
+            'lat': response['coord']['lat'],
+            'lon': response['coord']['lon']
+        })
+        # Save the updated list back to memory
+        session['weather_list'] = weather_list
         session.modified = True
 
-    return render_template('index.html', weather_list=session['weather_list'])
+    return render_template('index.html', weather_list=weather_list)
 
 
 @app.route('/download_pdf')
 def download_pdf():
-    w_list = session.get('weather_list', [])
-    if not w_list:
-        return "No data to report. Please search for a city first.", 400
+    weather_list = session.get('weather_list', [])
 
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
 
-    # Header
+    # Branding Header
     c.setFont("Helvetica-Bold", 18)
     c.setFillColorRGB(0.12, 0.22, 0.6)
     c.drawString(100, 750, "BABATUNDE ABASS | INTELLIGENCE REPORT")
+    c.setStrokeColorRGB(0, 0.82, 1.0)
     c.line(100, 740, 500, 740)
 
-    # Data Body (Fixes the "Empty PDF" flaw)
-    c.setFont("Helvetica-Bold", 14)
+    # DATA SECTION - This fixes the empty PDF!
+    c.setFont("Helvetica-Bold", 12)
     c.setFillColorRGB(0, 0, 0)
-    c.drawString(100, 710, "Latest Forecast Data:")
+    y_pos = 710
 
-    y_position = 680
-    for city in w_list:
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(100, y_position, f"City: {city['city']}")
-        c.setFont("Helvetica", 12)
-        c.drawString(100, y_position - 20,
-                     f"Condition: {city['desc']} | Temp: {city['temp']}°")
-        y_position -= 50
-        if y_position < 100:
-            break  # Page overflow protection
+    if not weather_list:
+        c.drawString(
+            100, y_pos, "No data available. Please run an analysis first.")
+    else:
+        for item in weather_list:
+            c.drawString(100, y_pos, f"City: {item['city']}")
+            c.setFont("Helvetica", 11)
+            c.drawString(
+                100, y_pos - 15, f"Temperature: {item['temp']}°C | Condition: {item['desc']}")
+            y_pos -= 45  # Move down for the next city
+            c.setFont("Helvetica-Bold", 12)
 
+    # Footer
     c.setFont("Helvetica-Oblique", 10)
-    c.drawString(100, 50, "© 2026 Babatunde Abass | Verified Intelligence")
+    c.drawString(100, 50, "© 2026 Babatunde Abass | Intelligence Hub Verified")
+
     c.showPage()
     c.save()
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="Babatunde_Abass_Intelligence.pdf")
-
-
-@app.route('/maritime')
-def maritime(): return render_template('maritime.html')
-
-
-@app.route('/solar')
-def solar(): return render_template('solar.html')
+    return send_file(buffer, as_attachment=True, download_name="Babatunde_Abass_Report.pdf")
 
 
 if __name__ == '__main__':
