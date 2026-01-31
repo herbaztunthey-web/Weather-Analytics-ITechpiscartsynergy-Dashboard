@@ -1,6 +1,7 @@
 import os
 import io
 import requests
+from datetime import datetime  # Added for Timestamp
 from flask import Flask, render_template, request, send_file, session
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
@@ -58,22 +59,24 @@ def download_pdf():
     elements = []
     styles = getSampleStyleSheet()
 
-    # Title
+    # Title & Timestamp
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     title = Paragraph(
         "BABATUNDE ABASS | WEATHER INTELLIGENCE REPORT", styles['Title'])
+    ts = Paragraph(
+        f"<font size=9>Report Generated: {now}</font>", styles['Normal'])
+
     elements.append(title)
+    elements.append(ts)
     elements.append(Spacer(1, 20))
 
-    # Table Header
+    # Table Data
     data = [["CITY NAME", "TEMPERATURE", "WEATHER CONDITION"]]
-
-    # Table Rows
     total_temp = 0
     for item in weather_list:
         data.append([item['city'], f"{item['temp']}°C", item['desc'].title()])
         total_temp += item['temp']
 
-    # Table Styling
     report_table = Table(data, colWidths=[180, 100, 200])
     style = TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#1e3799")),
@@ -86,17 +89,16 @@ def download_pdf():
     report_table.setStyle(style)
     elements.append(report_table)
 
-    # Summary Section
     if weather_list:
         elements.append(Spacer(1, 30))
         avg_temp = round(total_temp / len(weather_list), 2)
         summary = Paragraph(
-            f"<b>Data Summary:</b> Analyzed {len(weather_list)} locations. Average Hub Temperature: {avg_temp}°C.", styles['Normal'])
+            f"<b>Data Summary:</b> {len(weather_list)} Locations | Avg Temp: {avg_temp}°C", styles['Normal'])
         elements.append(summary)
 
     doc.build(elements)
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="Babatunde_Abass_Intelligence_Report.pdf")
+    return send_file(buffer, as_attachment=True, download_name="Babatunde_Abass_Report.pdf")
 
 
 if __name__ == '__main__':

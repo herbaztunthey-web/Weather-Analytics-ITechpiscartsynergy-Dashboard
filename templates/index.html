@@ -15,6 +15,7 @@
         .cards-col { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 10px; }
         .chart-col { flex: 1; min-width: 300px; background: white; padding: 15px; border-radius: 15px; height: 350px; }
         .card { background: white; padding: 15px; border-radius: 12px; display: flex; box-shadow: 0 2px 5px rgba(0,0,0,0.05); align-items: center; justify-content: space-between;}
+        .badge { padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; color: white; margin-left: 5px; }
         .btn { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-block; transition: 0.3s; }
     </style>
 </head>
@@ -41,7 +42,12 @@
         <div class="cards-col">
             {% for w in weather_list %}
             <div class="card">
-                <div><b>{{ w.city }}</b><br><small>{{ w.desc }}</small></div>
+                <div>
+                    <b>{{ w.city }}</b>
+                    {% if w.temp > 35 %}<span class="badge" style="background:orange;">🔥 HOT</span>{% endif %}
+                    {% if w.temp < 0 %}<span class="badge" style="background:#3498db;">❄️ COLD</span>{% endif %}
+                    <br><small>{{ w.desc }}</small>
+                </div>
                 <div style="font-size:24px;">{{ w.temp }}°C</div>
                 <img src="https://openweathermap.org/img/wn/{{ w.icon }}.png">
             </div>
@@ -56,32 +62,36 @@
         var map = L.map('map').setView([0, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        {% if weather_list %}
-            var coords = [];
-            {% for w in weather_list %}
-                L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map)
-                    .bindPopup("<b>{{ w.city }}</b><br>{{ w.temp }}°C");
-                coords.push([{{ w.lat }}, {{ w.lon }}]);
-            {% endfor %}
+        window.onload = function() {
+            {% if weather_list %}
+                var coords = [];
+                {% for w in weather_list %}
+                    L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map)
+                        .bindPopup("<b>{{ w.city }}</b><br>{{ w.temp }}°C");
+                    coords.push([{{ w.lat }}, {{ w.lon }}]);
+                {% endfor %}
 
-            if (coords.length > 0) {
-                map.fitBounds(coords);
-            }
+                if (coords.length > 0) {
+                    map.fitBounds(coords, {padding: [50, 50]});
+                }
 
-            new Chart(document.getElementById('barChart'), {
-                type: 'bar',
-                data: {
-                    labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}],
-                    datasets: [{
-                        label: 'Temperature Comparison',
-                        data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
-                        // DYNAMIC COLOR LOGIC: Red for < 0, Blue for >= 0
-                        backgroundColor: [{% for w in weather_list %} {{ "'#e74c3c'" if w.temp < 0 else "'#1e3799'" }}, {% endfor %}]
-                    }]
-                },
-                options: { maintainAspectRatio: false }
-            });
-        {% endif %}
+                new Chart(document.getElementById('barChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}],
+                        datasets: [{
+                            label: 'Temperature Comparison',
+                            data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
+                            backgroundColor: [{% for w in weather_list %} {{ "'#e74c3c'" if w.temp < 0 else "'#1e3799'" }}, {% endfor %}]
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+                
+                // Force map resize fix
+                setTimeout(function(){ map.invalidateSize(); }, 500);
+            {% endif %}
+        };
     </script>
 </body>
 </html>
