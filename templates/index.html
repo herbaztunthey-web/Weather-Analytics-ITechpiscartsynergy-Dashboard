@@ -59,23 +59,30 @@
     </div>
 
     <script>
+        // Initialize Map immediately
         var map = L.map('map').setView([0, 0], 2);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-        window.onload = function() {
+    
+        // Force all visuals to load only when the Page is 100% ready
+        document.addEventListener("DOMContentLoaded", function() {
             {% if weather_list %}
                 var coords = [];
+                
+                // Add Markers
                 {% for w in weather_list %}
                     L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map)
                         .bindPopup("<b>{{ w.city }}</b><br>{{ w.temp }}°C");
                     coords.push([{{ w.lat }}, {{ w.lon }}]);
                 {% endfor %}
-
+    
+                // Restore the "Prop2" Auto-Zoom
                 if (coords.length > 0) {
                     map.fitBounds(coords, {padding: [50, 50]});
                 }
-
-                new Chart(document.getElementById('barChart'), {
+    
+                // Restore the "Prop2" Bar Chart
+                var ctx = document.getElementById('barChart').getContext('2d');
+                new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}],
@@ -85,13 +92,18 @@
                             backgroundColor: [{% for w in weather_list %} {{ "'#e74c3c'" if w.temp < 0 else "'#1e3799'" }}, {% endfor %}]
                         }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false }
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false 
+                    }
                 });
                 
-                // Force map resize fix
-                setTimeout(function(){ map.invalidateSize(); }, 500);
+                // THE MASTER FIX: Force the map to recalculate its width/height
+                setTimeout(function(){ 
+                    map.invalidateSize(); 
+                }, 600);
             {% endif %}
-        };
+        });
     </script>
 </body>
 </html>
