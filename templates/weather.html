@@ -4,31 +4,41 @@
     <meta charset="UTF-8">
     <title>Babatunde Abass | Weather Intelligence</title>
     <style>
-        body { background: #f8fafc; font-family: 'Arial', sans-serif; margin: 0; padding-top: 60px; }
-        .nav { background: #1e293b; color: white; padding: 15px; position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; }
-        .card { background: white; max-width: 600px; margin: 40px auto; padding: 25px; border-radius: 12px; shadow: 0 4px 6px rgba(0,0,0,0.1); border-top: 4px solid #3b82f6; }
-        .btn-download { background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; display: inline-block; margin-top: 20px; }
+        body { background: #f8fafc; font-family: 'Segoe UI', sans-serif; margin: 0; padding-top: 80px; }
+        .nav { background: #1e293b; color: white; padding: 15px; position: fixed; top: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+        .card-container { background: white; max-width: 600px; margin: 20px auto; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid #3b82f6; }
+        .weather-item { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
+        .btn-action { background: #10b981; color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; display: inline-block; font-weight: bold; margin-top: 20px; transition: 0.3s; width: 100%; text-align: center; }
+        .btn-action:hover { background: #059669; }
     </style>
 </head>
 <body>
     <div class="nav">
-        <span><strong>BABATUNDE ABASS</strong> HUB</span>
-        <a href="/" style="color: white; text-decoration: none;">Home</a>
+        <span style="margin-left:20px;"><strong>BABATUNDE ABASS</strong> HUB</span>
+        <a href="/" style="color: white; text-decoration: none; margin-right:20px;">← Back to Analytics Hub</a>
     </div>
 
-    <div class="card">
-        <h1>Weather Intelligence Dashboard</h1>
+    <div class="card-container">
+        <h1 style="color: #1e293b; margin-top: 0;">Intelligence Analysis Report</h1>
+        <p style="color: #64748b;">The following cities have been processed in this session:</p>
+        
         {% if weather_list %}
             {% for w in weather_list %}
-                <h2>City: {{ w.city }}</h2>
-                <p>Temperature: {{ w.temp }}°C</p>
-                <p>Condition: {{ w.desc }}</p>
-                <img src="http://openweathermap.org/img/wn/{{ w.icon }}@2x.png" alt="icon">
+                <div class="weather-item">
+                    <div>
+                        <h2 style="margin: 0; color: #3b82f6;">{{ w.city }}</h2>
+                        <p style="margin: 5px 0; text-transform: capitalize;">{{ w.desc }}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.5rem; font-weight: bold;">{{ w.temp }}°C</span><br>
+                        <img src="http://openweathermap.org/img/wn/{{ w.icon }}.png" alt="icon">
+                    </div>
+                </div>
             {% endfor %}
-            <br>
-            <a href="/download_pdf" class="btn-download">Download Branded PDF Report</a>
+            
+            <a href="/download_pdf" class="btn-action">Download Branded Intelligence PDF</a>
         {% else %}
-            <p>No data found. Please search from the Home page.</p>
+            <p>No data found. Please return home and search for a city.</p>
         {% endif %}
     </div>
 </body>

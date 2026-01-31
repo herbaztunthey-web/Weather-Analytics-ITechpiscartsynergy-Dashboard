@@ -1,25 +1,25 @@
 import os
 import io
 import requests
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, session
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 
 app = Flask(__name__)
+app.secret_key = "babatunde_intelligence_secret_key"  # Needed for sessions
 
 # --- CONFIGURATION ---
-# This now matches the "Variable Name" box on Render
 API_KEY = os.environ.get("OPENWEATHER_API_KEY")
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
-
-# --- 1. THE HUB ---
+FORECAST_URL = "http://api.openweathermap.org/data/2.5/forecast"
 
 
 @app.route('/')
 def home():
-    return render_template('index.html')
-
-# --- 2. THE WEATHER MODULE ---
+    # Initialize sessions if they don't exist
+    if 'weather_list' not in session:
+        session['weather_list'] = []
+    return render_template('index.html', weather_list=session['weather_list'])
 
 
 @app.route('/analyze', methods=['POST'])
@@ -27,72 +27,80 @@ def analyze():
     city = request.form.get('city')
     units = request.form.get('unit', 'metric')
 
-    # Security check: If the API Key is missing from Render, show an error
     if not API_KEY:
-        return "Error: OPENWEATHER_API_KEY not found in Render Environment Variables.", 500
+        return "Error: API Key missing.", 500
 
+    # 1. Fetch Current Weather
     params = {'q': city, 'appid': API_KEY, 'units': units}
-    response = requests.get(BASE_URL, params=params).json()
+    resp = requests.get(BASE_URL, params=params).json()
 
-    weather_list = []
-    if response.get('cod') == 200:
-        weather_list.append({
-            'city': response['name'],
-            'temp': response['main']['temp'],
-            'desc': response['weather'][0]['description'],
-            'icon': response['weather'][0]['icon'],
-            'lat': response['coord']['lat'],
-            'lon': response['coord']['lon'],
-            'alert': "High Heat" if response['main']['temp'] > 35 else None
-        })
+    if resp.get('cod') == 200:
+        new_data = {
+            'city': resp['name'],
+            'temp': resp['main']['temp'],
+            'desc': resp['weather'][0]['description'],
+            'icon': resp['weather'][0]['icon'],
+            'lat': resp['coord']['lat'],
+            'lon': resp['coord']['lon']
+        }
 
-    return render_template('weather.html', weather_list=weather_list)
+        # Add to session list (prevents "only one city" flaw)
+        w_list = session.get('weather_list', [])
+        # Keep only the last 5 searches to keep charts clean
+        w_list.insert(0, new_data)
+        session['weather_list'] = w_list[:5]
+        session.modified = True
 
-# --- 3. THE BRANDED PDF ENGINE ---
+    return render_template('index.html', weather_list=session['weather_list'])
 
 
 @app.route('/download_pdf')
 def download_pdf():
+    w_list = session.get('weather_list', [])
+    if not w_list:
+        return "No data to report. Please search for a city first.", 400
+
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
 
+    # Header
     c.setFont("Helvetica-Bold", 18)
     c.setFillColorRGB(0.12, 0.22, 0.6)
     c.drawString(100, 750, "BABATUNDE ABASS | INTELLIGENCE REPORT")
-
-    c.setStrokeColorRGB(0, 0.82, 1.0)
     c.line(100, 740, 500, 740)
 
-    c.setFont("Helvetica", 12)
+    # Data Body (Fixes the "Empty PDF" flaw)
+    c.setFont("Helvetica-Bold", 14)
     c.setFillColorRGB(0, 0, 0)
-    c.drawString(100, 710, "Report Status: Official Data Forecast")
-    c.drawString(
-        100, 690, "Generated via: The Babatunde Abass Intelligence Hub")
+    c.drawString(100, 710, "Latest Forecast Data:")
+
+    y_position = 680
+    for city in w_list:
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(100, y_position, f"City: {city['city']}")
+        c.setFont("Helvetica", 12)
+        c.drawString(100, y_position - 20,
+                     f"Condition: {city['desc']} | Temp: {city['temp']}°")
+        y_position -= 50
+        if y_position < 100:
+            break  # Page overflow protection
 
     c.setFont("Helvetica-Oblique", 10)
-    c.drawString(
-        100, 50, "© 2026 Babatunde Abass | Data Analytics & Global Forecasting")
-    c.drawString(400, 50, "Verified on Render Cloud")
-
+    c.drawString(100, 50, "© 2026 Babatunde Abass | Verified Intelligence")
     c.showPage()
     c.save()
-
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="Babatunde_Abass_Report.pdf")
-
-# --- 4. SPECIALIZED MODULES ---
+    return send_file(buffer, as_attachment=True, download_name="Babatunde_Abass_Intelligence.pdf")
 
 
 @app.route('/maritime')
-def maritime():
-    return render_template('maritime.html')
+def maritime(): return render_template('maritime.html')
 
 
 @app.route('/solar')
-def solar():
-    return render_template('solar.html')
+def solar(): return render_template('solar.html')
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))  # Render uses 10000 by default
+    port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
