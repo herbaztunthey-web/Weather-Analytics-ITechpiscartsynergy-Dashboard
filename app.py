@@ -1,6 +1,7 @@
 import os
 import io
 import requests
+from datetime import datetime
 from flask import Flask, render_template, request, send_file, session
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -56,39 +57,54 @@ def download_pdf():
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
 
-    # Header
+    # 1. Header
     c.setFont("Helvetica-Bold", 16)
     c.setFillColorRGB(0.1, 0.2, 0.5)
-    c.drawString(50, 750, "BABATUNDE ABASS | WEATHER INTELLIGENCE REPORT")
+    c.drawString(50, 750, "BABATUNDE ABASS | INTELLIGENCE REPORT")
     c.setStrokeColorRGB(0.1, 0.2, 0.5)
     c.line(50, 745, 550, 745)
 
-    # Table Data Preparation
-    data = [["City", "Temperature (°C)", "Condition"]]  # Table Header
+    # 2. Main Data Table
+    data = [["City", "Temperature (°C)", "Condition"]]
     for item in weather_list:
         data.append([item['city'], f"{item['temp']}°C", item['desc']])
 
-    # Create Table
-    table = Table(data, colWidths=[150, 150, 200])
-    style = TableStyle([
+    main_table = Table(data, colWidths=[150, 100, 250])
+    main_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#1e3799")),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ])
-    table.setStyle(style)
+        ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey)
+    ]))
 
-    # Draw Table
-    table.wrapOn(c, 50, 400)
-    table.drawOn(c, 50, 700 - (len(data) * 20))
+    table_height = len(data) * 20
+    main_table.wrapOn(c, 50, 400)
+    main_table.drawOn(c, 50, 700 - table_height)
+
+    # 3. Summary & Time (Bottom of PDF)
+    summary_y = 100
+    c.setStrokeColor(colors.black)
+    c.line(50, summary_y + 40, 550, summary_y + 40)
+
+    c.setFont("Helvetica-Bold", 10)
+    c.setFillColor(colors.black)
+
+    # Summary Info
+    total_cities = len(weather_list)
+    gen_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    c.drawString(50, summary_y + 20, f"TOTAL CITIES ANALYZED: {total_cities}")
+    c.setFont("Helvetica-Oblique", 9)
+    c.drawString(50, summary_y, f"Report Generated On: {gen_time}")
+    c.drawRightString(550, summary_y, "System: Babatunde Abass Hub v2.0")
 
     c.showPage()
     c.save()
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="Babatunde_Report.pdf")
+    return send_file(buffer, as_attachment=True, download_name="Babatunde_Intelligence_Report.pdf")
 
 
 if __name__ == '__main__':
