@@ -1,54 +1,58 @@
 import os
 import requests
-import facebook  # The SDK we added to requirements.txt
+import facebook  # Ensure you have 'facebook-sdk' in requirements.txt
 from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-
-def fetch_weather():
-    """Fetches weather for your primary hub location."""
-    api_key = os.environ.get('OPENWEATHER_API_KEY')
-    # Let's use a default city; you can change this to your location
-    city = "Lagos"
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
-
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        temp = data['main']['temp']
-        desc = data['weather'][0]['description']
-        return f"🌍 {city} Intelligence Briefing\n🌡️ Temp: {temp}°C\n☁️ Status: {desc.title()}\n#BabatundeAbassHub #Automation"
-    return None
+# --- CONFIGURATION ---
+# These pull directly from the Render Environment variables you listed
+WEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY')
+FB_PAGE_TOKEN = os.environ.get('FB_PAGE_ACCESS_TOKEN')
+FB_PAGE_ID = os.environ.get('FB_PAGE_ID')
 
 
-@app.route('/auto-post')
-def auto_post():
-    """The trigger route that sends the post to Facebook."""
+def get_weather_report(city="Lagos"):
+    """Helper to fetch and format weather data."""
     try:
-        # Pulling keys from your Render environment
-        page_id = os.environ.get('FB_PAGE_ID')
-        token = os.environ.get('FB_PAGE_ACCESS_TOKEN')
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
+        response = requests.get(url).json()
 
-        # 1. Get the content
-        message = fetch_weather()
-        if not message:
-            return "Failed to fetch weather data", 500
+        if response.get("cod") != 200:
+            return f"Weather data for {city} currently unavailable."
 
-        # 2. Connect to Facebook and Post
-        graph = facebook.GraphAPI(access_token=token)
-        graph.put_object(parent_object=page_id,
-                         connection_name='feed', message=message)
-
-        return jsonify({"status": "Success", "message": "Facebook post published!"}), 200
+        temp = response['main']['temp']
+        desc = response['weather'][0]['description'].capitalize()
+        return f"📍 {city} Intelligence Update\n🌡️ Temperature: {temp}°C\n☁️ Condition: {desc}\n#BabatundeAbassHub #Automation"
     except Exception as e:
-        return jsonify({"status": "Error", "message": str(e)}), 500
+        return f"Error fetching weather: {str(e)}"
+
+# --- ROUTES ---
 
 
 @app.route('/')
 def home():
-    return "Intelligence Hub is Online & Monitoring."
+    return "Intelligence Hub is Online. Automation Ready."
+
+
+@app.route('/publish')
+def publish_to_fb():
+    """Triggered by Cron Job to post to Facebook."""
+    try:
+        # 1. Generate the report
+        message = get_weather_report("Lagos")
+
+        # 2. Connect to Facebook
+        graph = facebook.GraphAPI(access_token=FB_PAGE_TOKEN)
+
+        # 3. Post to the Page Feed
+        graph.put_object(parent_object=FB_PAGE_ID,
+                         connection_name='feed', message=message)
+
+        return jsonify({"status": "Success", "posted": message}), 200
+    except Exception as e:
+        return jsonify({"status": "Failed", "error": str(e)}), 500
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=False)
