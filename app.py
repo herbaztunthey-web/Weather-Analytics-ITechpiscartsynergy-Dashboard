@@ -52,15 +52,54 @@ def analyze():
 def download_pdf():
     weather_list = session.get('weather_list', [])
     buffer = io.BytesIO()
-    c = canvas.Canvas(buffer, pagesize=letter)
-    c.drawString(100, 750, "WEATHER REPORT")
-    y = 700
+
+    # Use SimpleDocTemplate for professional layout
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet
+
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+    styles = getSampleStyleSheet()
+
+    # 1. Professional Title
+    title = Paragraph(
+        "BABATUNDE ABASS | WEATHER INTELLIGENCE REPORT", styles['Title'])
+    elements.append(title)
+    elements.append(Spacer(1, 20))
+
+    # 2. Structured Table Data
+    data = [["CITY NAME", "TEMPERATURE", "WEATHER CONDITION"]]
+    total_temp = 0
     for item in weather_list:
-        c.drawString(100, y, f"{item['city']}: {item['temp']}°C")
-        y -= 20
-    c.save()
+        data.append([item['city'], f"{item['temp']}°C", item['desc'].title()])
+        total_temp += item['temp']
+
+    # 3. Apply the "Prop" Table Styling
+    report_table = Table(data, colWidths=[180, 100, 200])
+    style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0),
+         colors.HexColor("#1e3799")),  # Royal Blue Header
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.whitesmoke, colors.white])
+    ])
+    report_table.setStyle(style)
+    elements.append(report_table)
+
+    # 4. Data Summary Section
+    if weather_list:
+        elements.append(Spacer(1, 30))
+        avg_temp = round(total_temp / len(weather_list), 2)
+        summary = Paragraph(
+            f"<b>Data Summary:</b> Analyzed {len(weather_list)} locations. Average Hub Temperature: {avg_temp}°C.", styles['Normal'])
+        elements.append(summary)
+
+    doc.build(elements)
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="report.pdf")
+    return send_file(buffer, as_attachment=True, download_name="Babatunde_Abass_Report.pdf")
 
 
 # THE CRITICAL BINDING FIX FOR RENDER
