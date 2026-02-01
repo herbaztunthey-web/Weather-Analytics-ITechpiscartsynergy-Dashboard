@@ -55,37 +55,64 @@
     </div>
 
     <script>
-        // Force rendering logic
+        // 1. Define the 3 Visual Layers (The Switches)
+        var streets = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+        
+        var satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
+        });
+    
+        var terrain = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri',
+            maxZoom: 13
+        });
+    
+        // 2. Initialize map with the default "Streets" view
+        var map = L.map('map', {
+            center: [0, 0],
+            zoom: 2,
+            layers: [streets] 
+        });
+    
+        // 3. Create the Switcher Control Box
+        var baseMaps = {
+            "🗺️ Streets": streets,
+            "🛰️ Satellite": satellite,
+            "⛰️ Mountains": terrain
+        };
+    
+        // Add the control box to the top-right corner
+        L.control.layers(baseMaps).addTo(map);
+    
         window.onload = function() {
-            var map = L.map('map').setView([0, 0], 2);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
             {% if weather_list %}
                 var coords = [];
                 {% for w in weather_list %}
-                    L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map).bindPopup("{{ w.city }}: {{ w.temp }}°C");
+                    L.marker([{{ w.lat }}, {{ w.lon }}]).addTo(map)
+                        .bindPopup("<b>{{ w.city }}</b><br>{{ w.temp }}°C");
                     coords.push([{{ w.lat }}, {{ w.lon }}]);
                 {% endfor %}
-
+    
                 if (coords.length > 0) {
                     map.fitBounds(coords, {padding: [50, 50]});
                 }
-
+    
+                // Standard Chart.js logic
                 new Chart(document.getElementById('barChart'), {
                     type: 'bar',
                     data: {
                         labels: [{% for w in weather_list %} "{{ w.city }}", {% endfor %}],
                         datasets: [{
-                            label: 'Temp (°C)',
+                            label: 'Temperature Comparison',
                             data: [{% for w in weather_list %} {{ w.temp }}, {% endfor %}],
                             backgroundColor: '#1e3799'
                         }]
                     },
-                    options: { maintainAspectRatio: false }
+                    options: { responsive: true, maintainAspectRatio: false }
                 });
-
-                // The fix for the grey map issue in Seen3.png
-                setTimeout(function(){ map.invalidateSize(); }, 500);
+                
+                // THE FIX: Wait for layout to settle, then force map resize
+                setTimeout(function(){ map.invalidateSize(); }, 800);
             {% endif %}
         };
     </script>
