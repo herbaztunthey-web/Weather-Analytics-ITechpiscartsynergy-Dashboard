@@ -59,7 +59,7 @@ def download_pdf():
     # Header
     c.setFont("Helvetica-Bold", 16)
     c.setFillColorRGB(0.1, 0.2, 0.5)
-    c.drawString(50, 750, "BABATUNDE ABASS | INTELLIGENCE REPORT")
+    c.drawString(50, 750, "BABATUNDE ABASS | WEATHER INTELLIGENCE REPORT")
     c.setStrokeColorRGB(0.1, 0.2, 0.5)
     c.line(50, 745, 550, 745)
 
