@@ -4,11 +4,12 @@ import requests
 from flask import Flask, render_template, request, send_file, session
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib import colors
 
 app = Flask(__name__)
 app.secret_key = "babatunde_abass_hub_2026"
 
-# This pulls from your Render Dashboard
 API_KEY = os.environ.get("OPENWEATHER_API_KEY")
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
 
@@ -34,7 +35,7 @@ def analyze():
                 new_city_data = {
                     'city': response['name'],
                     'temp': response['main']['temp'],
-                    'desc': response['weather'][0]['description'],
+                    'desc': response['weather'][0]['description'].capitalize(),
                     'icon': response['weather'][0]['icon'],
                     'lat': response['coord']['lat'],
                     'lon': response['coord']['lon']
@@ -54,27 +55,40 @@ def download_pdf():
     weather_list = session.get('weather_list', [])
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
-    c.setFont("Helvetica-Bold", 18)
-    c.setFillColorRGB(0.12, 0.22, 0.6)
-    c.drawString(100, 750, "BABATUNDE ABASS | WEATHER INTELLIGENCE REPORT")
-    c.line(100, 740, 500, 740)
-    y_pos = 700
-    c.setFont("Helvetica-Bold", 12)
-    c.setFillColorRGB(0, 0, 0)
+
+    # Header
+    c.setFont("Helvetica-Bold", 16)
+    c.setFillColorRGB(0.1, 0.2, 0.5)
+    c.drawString(50, 750, "BABATUNDE ABASS | INTELLIGENCE REPORT")
+    c.setStrokeColorRGB(0.1, 0.2, 0.5)
+    c.line(50, 745, 550, 745)
+
+    # Table Data Preparation
+    data = [["City", "Temperature (°C)", "Condition"]]  # Table Header
     for item in weather_list:
-        c.drawString(100, y_pos, f"City: {item['city']}")
-        c.setFont("Helvetica", 11)
-        c.drawString(100, y_pos - 15,
-                     f"Temp: {item['temp']}°C | Condition: {item['desc']}")
-        y_pos -= 45
-        if y_pos < 100:
-            c.showPage()
-            y_pos = 750
-            c.setFont("Helvetica-Bold", 12)
+        data.append([item['city'], f"{item['temp']}°C", item['desc']])
+
+    # Create Table
+    table = Table(data, colWidths=[150, 150, 200])
+    style = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#1e3799")),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ])
+    table.setStyle(style)
+
+    # Draw Table
+    table.wrapOn(c, 50, 400)
+    table.drawOn(c, 50, 700 - (len(data) * 20))
+
     c.showPage()
     c.save()
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="Babatunde_Abass_Report.pdf")
+    return send_file(buffer, as_attachment=True, download_name="Babatunde_Report.pdf")
 
 
 if __name__ == '__main__':
