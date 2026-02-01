@@ -1,7 +1,7 @@
 import os
 import io
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, send_file, session
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -12,14 +12,23 @@ app = Flask(__name__)
 # The Secret Key is what allows the 'Session' (Shopping Cart) to work safely
 app.secret_key = "babatunde_abass_hub_2026"
 
+# --- MOBILE & HOME SCREEN FIX ---
+# This ensures that when you "Add to Home Screen," the phone keeps your data
+# even if the app is closed and reopened.
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+
 API_KEY = os.environ.get("OPENWEATHER_API_KEY")
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
 
 
 @app.route('/')
 def home():
-    session['weather_list'] = []
-    return render_template('index.html', weather_list=[])
+    # Improved home route: Don't wipe the data if it's already there
+    # This helps the "Home Screen" app stay populated.
+    if 'weather_list' not in session:
+        session['weather_list'] = []
+    return render_template('index.html', weather_list=session['weather_list'])
 
 
 @app.route('/analyze', methods=['POST'])
@@ -52,8 +61,10 @@ def analyze():
     # SAVE THE DATA
     session['weather_list'] = weather_list
 
-    # THIS IS THE MAGIC LINE FOR MOBILE PHONES:
-    # It forces the phone browser to save the new cities.
+    # MAGIC LINES FOR MOBILE & HOME SCREEN:
+    # 1. Flag the session as 'Permanent' for this specific user
+    session.permanent = True
+    # 2. Force the phone browser to save the update immediately
     session.modified = True
 
     return render_template('index.html', weather_list=weather_list)
