@@ -57,54 +57,71 @@ def download_pdf():
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
 
-    # 1. Header
-    c.setFont("Helvetica-Bold", 16)
-    c.setFillColorRGB(0.1, 0.2, 0.5)
-    c.drawString(50, 750, "BABATUNDE ABASS | INTELLIGENCE REPORT")
-    c.setStrokeColorRGB(0.1, 0.2, 0.5)
-    c.line(50, 745, 550, 745)
+    # --- 1. CIRCULAR PROFILE PICTURE WITH BORDER ---
+    img_path = "profile.jpg"
+    if os.path.exists(img_path):
+        # Coordinates: X=480 (Right side), Y=710 (Top side), Size=70x70
+        img_x, img_y, size = 480, 710, 70
+        center_x, center_y = img_x + (size/2), img_y + (size/2)
+        radius = size / 2
 
-    # 2. Main Data Table
-    data = [["City", "Temperature (°C)", "Condition"]]
+        c.saveState()
+        # Create a circle mask so the image isn't square
+        mask = c.beginPath()
+        mask.circle(center_x, center_y, radius)
+        c.clipPath(mask, stroke=0, fill=0)
+        c.drawInlineImage(img_path, img_x, img_y, width=size, height=size)
+        c.restoreState()
+
+        # Draw the professional Blue Border Ring
+        c.setStrokeColor(colors.HexColor("#1e3799"))
+        c.setLineWidth(2.5)
+        c.circle(center_x, center_y, radius)
+
+    # --- 2. HEADER ---
+    c.setFont("Helvetica-Bold", 16)
+    c.setFillColor(colors.HexColor("#1e3799"))
+    c.drawString(50, 750, "BABATUNDE ABASS | INTELLIGENCE REPORT")
+    c.setStrokeColor(colors.HexColor("#1e3799"))
+    c.line(50, 745, 460, 745)
+
+    # --- 3. WEATHER DATA TABLE ---
+    data = [["City", "Temp", "Weather Condition"]]
     for item in weather_list:
         data.append([item['city'], f"{item['temp']}°C", item['desc']])
 
-    main_table = Table(data, colWidths=[150, 100, 250])
-    main_table.setStyle(TableStyle([
+    table = Table(data, colWidths=[130, 80, 240])
+    table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#1e3799")),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.whitesmoke),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey)
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('FONTSIZE', (0, 1), (-1, -1), 10),
     ]))
 
-    table_height = len(data) * 20
-    main_table.wrapOn(c, 50, 400)
-    main_table.drawOn(c, 50, 700 - table_height)
+    t_height = len(data) * 20
+    table.wrapOn(c, 50, 400)
+    table.drawOn(c, 50, 680 - t_height)
 
-    # 3. Summary & Time (Bottom of PDF)
-    summary_y = 100
+    # --- 4. FOOTER SUMMARY & TIME ---
     c.setStrokeColor(colors.black)
-    c.line(50, summary_y + 40, 550, summary_y + 40)
+    c.setLineWidth(1)
+    c.line(50, 100, 550, 100)  # Bottom separator line
+
+    total = len(weather_list)
+    timestamp = datetime.now().strftime("%B %d, %Y | %I:%M %p")
 
     c.setFont("Helvetica-Bold", 10)
-    c.setFillColor(colors.black)
-
-    # Summary Info
-    total_cities = len(weather_list)
-    gen_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    c.drawString(50, summary_y + 20, f"TOTAL CITIES ANALYZED: {total_cities}")
+    c.drawString(50, 80, f"TOTAL ANALYSIS: {total} CITIES")
     c.setFont("Helvetica-Oblique", 9)
-    c.drawString(50, summary_y, f"Report Generated On: {gen_time}")
-    c.drawRightString(550, summary_y, "System: Babatunde Abass Hub v2.0")
+    c.drawString(50, 65, f"Report Date: {timestamp}")
+    c.drawRightString(550, 65, "Babatunde Abass Intelligence Hub v2.0")
 
     c.showPage()
     c.save()
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True, download_name="Babatunde_Intelligence_Report.pdf")
+    return send_file(buffer, as_attachment=True, download_name="Babatunde_Report.pdf")
 
 
 if __name__ == '__main__':
