@@ -24,14 +24,19 @@ def home():
 @app.route('/analyze', methods=['POST'])
 def analyze():
     raw_cities = request.form.get('city')
-    units = request.form.get('unit', 'metric')
+    # Use 'metric' as a hard default to prevent empty unit errors on mobile
+    units = request.form.get('unit', 'metric') or 'metric'
+
     city_names = [c.strip() for c in raw_cities.split(',') if c.strip()]
+
+    # Ensure weather_list exists even if session is acting up
     weather_list = session.get('weather_list', [])
 
     for city in city_names:
         params = {'q': city, 'appid': API_KEY, 'units': units}
         try:
             response = requests.get(BASE_URL, params=params).json()
+
             if response.get('cod') == 200:
                 new_city_data = {
                     'city': response['name'],
@@ -43,11 +48,14 @@ def analyze():
                 }
                 if not any(item['city'] == new_city_data['city'] for item in weather_list):
                     weather_list.append(new_city_data)
+            else:
+                # This helps you see why it failed on your phone
+                print(f"API Error for {city}: {response.get('message')}")
         except Exception as e:
-            print(f"Error fetching {city}: {e}")
+            print(f"Network Error: {e}")
 
     session['weather_list'] = weather_list
-    session.modified = True
+    session.modified = True  # Crucial for mobile browsers to register the change
     return render_template('index.html', weather_list=weather_list)
 
 
