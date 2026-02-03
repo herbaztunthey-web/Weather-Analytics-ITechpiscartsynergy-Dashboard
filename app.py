@@ -12,9 +12,8 @@ app = Flask(__name__)
 # The Secret Key is what allows the 'Session' (Shopping Cart) to work safely
 app.secret_key = "babatunde_abass_hub_2026"
 
-# --- MOBILE & HOME SCREEN FIX ---
-# This ensures that when you "Add to Home Screen," the phone keeps your data
-# even if the app is closed and reopened.
+# --- MOBILE & HOME SCREEN SESSION SETTINGS ---
+# Ensures the phone doesn't delete your data when the app closes
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
@@ -24,8 +23,7 @@ BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
 
 @app.route('/')
 def home():
-    # Improved home route: Don't wipe the data if it's already there
-    # This helps the "Home Screen" app stay populated.
+    # If starting fresh, ensure list is empty
     if 'weather_list' not in session:
         session['weather_list'] = []
     return render_template('index.html', weather_list=session['weather_list'])
@@ -33,12 +31,14 @@ def home():
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
+    # RESET: Clear the previous search results immediately
+    session['weather_list'] = []
+
     raw_cities = request.form.get('city')
     units = request.form.get('unit', 'metric')
     city_names = [c.strip() for c in raw_cities.split(',') if c.strip()]
 
-    # Grab the current list from the "Cart"
-    weather_list = session.get('weather_list', [])
+    weather_list = []
 
     for city in city_names:
         params = {'q': city, 'appid': API_KEY, 'units': units}
@@ -53,18 +53,13 @@ def analyze():
                     'lat': response['coord']['lat'],
                     'lon': response['coord']['lon']
                 }
-                if not any(item['city'] == new_city_data['city'] for item in weather_list):
-                    weather_list.append(new_city_data)
+                weather_list.append(new_city_data)
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error fetching {city}: {e}")
 
-    # SAVE THE DATA
+    # SAVE & FORCE SYNC for mobile devices
     session['weather_list'] = weather_list
-
-    # MAGIC LINES FOR MOBILE & HOME SCREEN:
-    # 1. Flag the session as 'Permanent' for this specific user
     session.permanent = True
-    # 2. Force the phone browser to save the update immediately
     session.modified = True
 
     return render_template('index.html', weather_list=weather_list)
@@ -76,7 +71,7 @@ def download_pdf():
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
 
-    # Profile Photo Logic
+    # 1. Circular Profile Photo with Blue Border
     img_path = "profile.jpg"
     if os.path.exists(img_path):
         img_x, img_y, size = 480, 710, 70
@@ -92,13 +87,13 @@ def download_pdf():
         c.setLineWidth(2.5)
         c.circle(center_x, center_y, radius)
 
-    # Header
+    # 2. Header
     c.setFont("Helvetica-Bold", 16)
     c.setFillColor(colors.HexColor("#1e3799"))
     c.drawString(50, 750, "BABATUNDE ABASS | WEATHER INTELLIGENCE REPORT")
     c.line(50, 745, 460, 745)
 
-    # Table
+    # 3. Weather Data Table
     data = [["City", "Temp", "Weather Condition"]]
     for item in weather_list:
         data.append([item['city'], f"{item['temp']}°C", item['desc']])
@@ -116,7 +111,7 @@ def download_pdf():
     table.wrapOn(c, 50, 400)
     table.drawOn(c, 50, 680 - t_height)
 
-    # Footer
+    # 4. Footer with Summary and Timestamp
     c.setStrokeColor(colors.black)
     c.line(50, 100, 550, 100)
     total = len(weather_list)
