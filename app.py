@@ -1,17 +1,13 @@
 import os
 import io
 import requests
-import sqlite3  # Needed for history
+import sqlite3
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, send_file, session
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
-
-# --- AI BRAIN IMPORTS ---
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
 
 app = Flask(__name__)
 app.secret_key = "babatunde_abass_hub_2026"
@@ -22,23 +18,27 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 API_KEY = os.environ.get("OPENWEATHER_API_KEY")
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
 DB_PATH = "final_weather.db"
-VECTOR_DB_DIR = "ai_brain/vector_store"
 
 
 def get_ai_insight(city_name):
-    """Safe helper to ask the brain for history without crashing the app"""
+    """Lightweight history finder - No heavy AI Model needed, saves RAM!"""
     try:
-        embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2")
-        db = Chroma(persist_directory=VECTOR_DB_DIR,
-                    embedding_function=embeddings)
-        # Search for 1 relevant historical record
-        results = db.similarity_search(city_name, k=1)
-        if results:
-            return results[0].page_content
+        if not os.path.exists(DB_PATH):
+            return "First time tracking this city."
+
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        # Look for the most recent previous entry for this city
+        cursor.execute(
+            "SELECT temp, unit, timestamp FROM history WHERE city = ? ORDER BY id DESC LIMIT 1", (city_name,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if row:
+            return f"🤖 Intelligence Insight: Last recorded at {row[0]}{row[1]} on {row[2]}."
     except Exception as e:
-        print(f"AI Brain Sleep: {e}")
-    return "No historical records found for this city."
+        print(f"Database read error: {e}")
+    return "This is a new city for your Intelligence Hub!"
 
 
 @app.route('/')
@@ -54,15 +54,16 @@ def analyze():
     raw_cities = request.form.get('city')
     units = request.form.get('unit', 'metric')
 
-    # Mapping for the Brain only (Protects your format)
     unit_label = "°C" if units == "metric" else "°F"
-
     city_names = [c.strip() for c in raw_cities.split(',') if c.strip()]
     weather_list = []
-    ai_insights = []  # New bucket for AI talk
+    ai_insights = []
 
+    # Ensure database table exists
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS history 
+                     (id INTEGER PRIMARY KEY AUTOINCREMENT, city TEXT, temp REAL, timestamp TEXT, unit TEXT)''')
 
     for city in city_names:
         params = {'q': city, 'appid': API_KEY, 'units': units}
@@ -73,11 +74,11 @@ def analyze():
                 temp = response['main']['temp']
                 desc = response['weather'][0]['description'].capitalize()
 
-                # 1. ADD TO AI INSIGHTS (BEFORE SAVING NEW DATA)
+                # 1. GET PREVIOUS RECORD BEFORE SAVING NEW ONE
                 insight = get_ai_insight(name)
                 ai_insights.append({"city": name, "text": insight})
 
-                # 2. SAVE TO SQL (WITH CLEAN UNIT)
+                # 2. SAVE CURRENT SEARCH TO SQL
                 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 cursor.execute("INSERT INTO history (city, temp, timestamp, unit) VALUES (?, ?, ?, ?)",
                                (name, temp, timestamp, unit_label))
@@ -103,4 +104,38 @@ def analyze():
 
     return render_template('index.html', weather_list=weather_list, ai_insights=ai_insights)
 
-# ... (Keep your download_pdf and main block exactly the same) ...
+
+@app.route('/download_pdf')
+def download_pdf():
+    weather_list = session.get('weather_list', [])
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+
+    # Header
+    c.setFont("Helvetica-Bold", 16)
+    c.setFillColor(colors.HexColor("#1e3799"))
+    c.drawString(50, 750, "BABATUNDE ABASS | WEATHER INTELLIGENCE REPORT")
+
+    # Table
+    data = [["City", "Temp", "Weather Condition"]]
+    for item in weather_list:
+        data.append([item['city'], f"{item['temp']}°C", item['desc']])
+
+    table = Table(data, colWidths=[130, 80, 240])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#1e3799")),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+    ]))
+    table.wrapOn(c, 50, 400)
+    table.drawOn(c, 50, 600)
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name="Babatunde_Report.pdf")
+
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
