@@ -36,6 +36,7 @@ def analyze():
 
     raw_cities = request.form.get('city')
     units = request.form.get('unit', 'metric')
+    unit_label = "°C" if units == "metric" else "°F"
     city_names = [c.strip() for c in raw_cities.split(',') if c.strip()]
 
     weather_list = []
